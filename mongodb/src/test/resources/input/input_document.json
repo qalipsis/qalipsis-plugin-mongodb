@@ -1,0 +1,197 @@
+[
+  {
+    "Timestamp": "2020-10-20T12:34:21",
+    "Device name": "Car #1",
+    "Event name": "Ignition on"
+  },
+  {
+    "Timestamp": "2020-10-20T12:34:21",
+    "Device name": "Car #2",
+    "Event name": "Ignition on"
+  },
+  {
+    "Timestamp": "2020-10-20T12:34:21",
+    "Device name": "Truck #1",
+    "Event name": "Ignition on"
+  },
+  {
+    "Timestamp": "2020-10-20T12:35:08",
+    "Device name": "Car #1",
+    "Event name": "Engine on"
+  },
+  {
+    "Timestamp": "2020-10-20T12:35:08",
+    "Device name": "Car #2",
+    "Event name": "Engine on"
+  },
+  {
+    "Timestamp": "2020-10-20T12:35:08",
+    "Device name": "Truck #1",
+    "Event name": "Engine on"
+  },
+  {
+    "Timestamp": "2020-10-20T12:36:08",
+    "Device name": "Car #1",
+    "Event name": "Driving"
+  },
+  {
+    "Timestamp": "2020-10-20T12:36:08",
+    "Device name": "Car #2",
+    "Event name": "Driving"
+  },
+  {
+    "Timestamp": "2020-10-20T12:36:08",
+    "Device name": "Truck #1",
+    "Event name": "Driving"
+  },
+  {
+    "Timestamp": "2020-10-20T12:38:56",
+    "Device name": "Car #1",
+    "Event name": "Leaving office geofence"
+  },
+  {
+    "Timestamp": "2020-10-20T12:38:56",
+    "Device name": "Car #2",
+    "Event name": "Leaving office geofence"
+  },
+  {
+    "Timestamp": "2020-10-20T12:38:56",
+    "Device name": "Truck #1",
+    "Event name": "Leaving office geofence"
+  },
+  {
+    "Timestamp": "2020-10-20T12:40:14",
+    "Device name": "Car #1",
+    "Event name": "Driving over 30 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:40:14",
+    "Device name": "Car #2",
+    "Event name": "Driving over 30 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:40:14",
+    "Device name": "Truck #1",
+    "Event name": "Driving over 30 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:44:16",
+    "Device name": "Car #1",
+    "Event name": "Driving over 50 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:44:16",
+    "Device name": "Car #2",
+    "Event name": "Driving over 50 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:44:16",
+    "Device name": "Truck #1",
+    "Event name": "Driving over 50 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:45:32",
+    "Device name": "Car #1",
+    "Event name": "Short stop"
+  },
+  {
+    "Timestamp": "2020-10-20T12:45:32",
+    "Device name": "Car #2",
+    "Event name": "Short stop"
+  },
+  {
+    "Timestamp": "2020-10-20T12:45:32",
+    "Device name": "Truck #1",
+    "Event name": "Short stop"
+  },
+  {
+    "Timestamp": "2020-10-20T12:47:16",
+    "Device name": "Car #1",
+    "Event name": "Driving"
+  },
+  {
+    "Timestamp": "2020-10-20T12:47:16",
+    "Device name": "Car #2",
+    "Event name": "Driving"
+  },
+  {
+    "Timestamp": "2020-10-20T12:47:16",
+    "Device name": "Truck #1",
+    "Event name": "Driving"
+  },
+  {
+    "Timestamp": "2020-10-20T12:49:22",
+    "Device name": "Car #1",
+    "Event name": "Driving over 30 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:49:22",
+    "Device name": "Car #2",
+    "Event name": "Driving over 30 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:49:22",
+    "Device name": "Truck #1",
+    "Event name": "Driving over 30 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:51:12",
+    "Device name": "Car #1",
+    "Event name": "Driving over 50 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:51:12",
+    "Device name": "Car #2",
+    "Event name": "Driving over 50 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:51:12",
+    "Device name": "Truck #1",
+    "Event name": "Driving over 50 kmh"
+  },
+  {
+    "Timestamp": "2020-10-20T12:58:48",
+    "Device name": "Car #1",
+    "Event name": "Stop"
+  },
+  {
+    "Timestamp": "2020-10-20T12:58:48",
+    "Device name": "Car #2",
+    "Event name": "Stop"
+  },
+  {
+    "Timestamp": "2020-10-20T12:58:48",
+    "Device name": "Truck #1",
+    "Event name": "Stop"
+  },
+  {
+    "Timestamp": "2020-10-20T12:59:07",
+    "Device name": "Car #1",
+    "Event name": "Engine off"
+  },
+  {
+    "Timestamp": "2020-10-20T12:59:07",
+    "Device name": "Car #2",
+    "Event name": "Engine off"
+  },
+  {
+    "Timestamp": "2020-10-20T12:59:07",
+    "Device name": "Truck #1",
+    "Event name": "Engine off"
+  },
+  {
+    "Timestamp": "2020-10-20T12:59:08",
+    "Device name": "Car #1",
+    "Event name": "Ignition off"
+  },
+  {
+    "Timestamp": "2020-10-20T12:59:08",
+    "Device name": "Car #2",
+    "Event name": "Ignition off"
+  },
+  {
+    "Timestamp": "2020-10-20T12:59:08",
+    "Device name": "Truck #1",
+    "Event name": "Ignition off"
+  }
+]

@@ -1,0 +1,18 @@
+2020-10-20T12:38:56;Truck #1;Leaving office geofence
+2020-10-20T12:40:14;Car #1;Driving over 30 kmh
+2020-10-20T12:40:14;Car #2;Driving over 30 kmh
+2020-10-20T12:40:14;Truck #1;Driving over 30 kmh
+2020-10-20T12:44:16;Car #1;Driving over 50 kmh
+2020-10-20T12:44:16;Car #2;Driving over 50 kmh
+2020-10-20T12:44:16;Truck #1;Driving over 50 kmh
+2020-10-20T12:45:32;Car #1;Short stop
+2020-10-20T12:45:32;Car #2;Short stop
+2020-10-20T12:45:32;Truck #1;Short stop
+2020-10-20T12:47:16;Car #1;Driving
+2020-10-20T12:47:16;Car #2;Driving
+2020-10-20T12:47:16;Truck #1;Driving
+2020-10-20T12:49:22;Car #1;Driving over 30 kmh
+2020-10-20T12:49:22;Car #2;Driving over 30 kmh
+2020-10-20T12:49:22;Truck #1;Driving over 30 kmh
+2020-10-20T12:51:12;Car #1;Driving over 50 kmh
+2020-10-20T12:51:12;Car #2;Driving over 50 kmh

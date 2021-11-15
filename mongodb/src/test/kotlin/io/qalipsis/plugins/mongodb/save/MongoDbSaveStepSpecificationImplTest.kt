@@ -1,0 +1,120 @@
+package io.qalipsis.plugins.mongodb.save
+
+import assertk.all
+import assertk.assertThat
+import assertk.assertions.*
+import com.mongodb.reactivestreams.client.MongoClients
+import io.aerisconsulting.catadioptre.getProperty
+import io.qalipsis.api.context.StepContext
+import io.qalipsis.api.steps.DummyStepSpecification
+import io.qalipsis.plugins.mondodb.mongodb
+import io.qalipsis.plugins.mondodb.save.MongoDbSaveMetricsConfiguration
+import io.qalipsis.plugins.mondodb.save.MongoDbSaveQueryConfiguration
+import io.qalipsis.plugins.mondodb.save.MongoDbSaveStepSpecificationImpl
+import io.qalipsis.plugins.mondodb.save.save
+import io.qalipsis.test.mockk.relaxedMockk
+import kotlinx.coroutines.test.runBlockingTest
+import org.bson.Document
+import org.junit.jupiter.api.Test
+
+
+/**
+ *
+ * @author Alexander Sosnovsky
+ */
+internal class MongoDbSaveStepSpecificationImplTest {
+
+    private val databaseName: (suspend (ctx: StepContext<*, *>, input: Any?) -> String) = { _, _ -> "db" }
+
+    private val collectionName: (suspend (ctx: StepContext<*, *>, input: Any) -> String) = { _, _ -> "col" }
+
+    private val recordSupplier: (suspend (ctx: StepContext<*, *>, input: Any?) -> List<Document>) = { _, _ ->
+        listOf(
+            Document("key1", "val1"),
+            Document("key3", "val3"),
+            Document("key3-1", "val3-1")
+        )
+    }
+
+    @Test
+    fun `should add minimal configuration for the step`() = runBlockingTest {
+        val previousStep = DummyStepSpecification()
+        previousStep.mongodb().save {
+            name = "my-save-step"
+            connect {
+                MongoClients.create()
+            }
+            query {
+                database = databaseName
+                collection = collectionName
+                records = recordSupplier
+            }
+
+        }
+
+        assertThat(previousStep.nextSteps[0]).isInstanceOf(MongoDbSaveStepSpecificationImpl::class).all {
+            prop("name") { MongoDbSaveStepSpecificationImpl<*>::name.call(it) }.isEqualTo("my-save-step")
+            prop(MongoDbSaveStepSpecificationImpl<*>::clientBuilder).isNotNull()
+            prop(MongoDbSaveStepSpecificationImpl<*>::queryConfig).all {
+                prop(MongoDbSaveQueryConfiguration<*>::records).isEqualTo(recordSupplier)
+            }
+            prop(MongoDbSaveStepSpecificationImpl<*>::metrics).isNotNull().all {
+                prop(MongoDbSaveMetricsConfiguration::events).isFalse()
+                prop(MongoDbSaveMetricsConfiguration::meters).isFalse()
+            }
+        }
+
+        val step: MongoDbSaveStepSpecificationImpl<*> =
+            previousStep.nextSteps[0] as MongoDbSaveStepSpecificationImpl<*>
+
+        val database = step.queryConfig.getProperty<suspend (ctx: StepContext<*, *>, input: Int) -> String>("database")
+        assertThat(database(relaxedMockk(), relaxedMockk())).isEqualTo("db")
+
+        val collection =
+            step.queryConfig.getProperty<suspend (ctx: StepContext<*, *>, input: Int) -> String>("collection")
+        assertThat(collection(relaxedMockk(), relaxedMockk())).isEqualTo("col")
+    }
+
+
+    @Test
+    fun `should add a complete configuration for the step`() = runBlockingTest {
+        val previousStep = DummyStepSpecification()
+        previousStep.mongodb().save {
+            name = "my-save-step"
+            connect {
+                MongoClients.create()
+            }
+            query {
+                database = databaseName
+                collection = collectionName
+                records = recordSupplier
+            }
+            metrics {
+                meters = true
+                events = true
+            }
+        }
+
+        assertThat(previousStep.nextSteps[0]).isInstanceOf(MongoDbSaveStepSpecificationImpl::class).all {
+            prop("name") { MongoDbSaveStepSpecificationImpl<*>::name.call(it) }.isEqualTo("my-save-step")
+            prop(MongoDbSaveStepSpecificationImpl<*>::clientBuilder).isNotNull()
+            prop(MongoDbSaveStepSpecificationImpl<*>::queryConfig).all {
+                prop(MongoDbSaveQueryConfiguration<*>::records).isEqualTo(recordSupplier)
+            }
+            prop(MongoDbSaveStepSpecificationImpl<*>::metrics).all {
+                prop(MongoDbSaveMetricsConfiguration::events).isTrue()
+                prop(MongoDbSaveMetricsConfiguration::meters).isTrue()
+            }
+        }
+
+        val step: MongoDbSaveStepSpecificationImpl<*> =
+            previousStep.nextSteps[0] as MongoDbSaveStepSpecificationImpl<*>
+
+        val database = step.queryConfig.getProperty<suspend (ctx: StepContext<*, *>, input: Int) -> String>("database")
+        assertThat(database(relaxedMockk(), relaxedMockk())).isEqualTo("db")
+
+        val collection =
+            step.queryConfig.getProperty<suspend (ctx: StepContext<*, *>, input: Int) -> String>("collection")
+        assertThat(collection(relaxedMockk(), relaxedMockk())).isEqualTo("col")
+    }
+}
