@@ -13,8 +13,8 @@ import io.qalipsis.api.scenario.StepSpecificationRegistry
 import io.qalipsis.api.scenario.scenario
 import io.qalipsis.api.steps.SingletonConfiguration
 import io.qalipsis.api.steps.SingletonType
+import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.plugins.mondodb.DefaultValues
-import io.qalipsis.plugins.mondodb.MongoDbMetricsConfiguration
 import io.qalipsis.plugins.mondodb.MongoDbPollStepSpecificationImpl
 import io.qalipsis.plugins.mondodb.MongoDbSearchConfiguration
 import io.qalipsis.plugins.mondodb.Sorting
@@ -57,9 +57,9 @@ internal class MongoDbSpecificationImplTest {
             prop(MongoDbPollStepSpecificationImpl::pollPeriod).isEqualTo(
                 Duration.ofSeconds(DefaultValues.pollDurationInSeconds)
             )
-            prop(MongoDbPollStepSpecificationImpl::metrics).all {
-                prop(MongoDbMetricsConfiguration::events).isFalse()
-                prop(MongoDbMetricsConfiguration::meters).isFalse()
+            prop(MongoDbPollStepSpecificationImpl::monitoringConfig).all {
+                prop(StepMonitoringConfiguration::events).isFalse()
+                prop(StepMonitoringConfiguration::meters).isFalse()
             }
             prop(MongoDbPollStepSpecificationImpl::singletonConfiguration).all {
                 prop(SingletonConfiguration::type).isEqualTo(SingletonType.UNICAST)
@@ -85,7 +85,7 @@ internal class MongoDbSpecificationImplTest {
                 tieBreaker = "device"
             }
             pollDelay(Duration.ofSeconds(1L))
-            metrics {
+            monitoring {
                 events = true
                 meters = true
             }
@@ -105,9 +105,9 @@ internal class MongoDbSpecificationImplTest {
             }
 
             prop(MongoDbPollStepSpecificationImpl::pollPeriod).isEqualTo(Duration.ofSeconds(1L))
-            prop(MongoDbPollStepSpecificationImpl::metrics).all {
-                prop(MongoDbMetricsConfiguration::events).isTrue()
-                prop(MongoDbMetricsConfiguration::meters).isTrue()
+            prop(MongoDbPollStepSpecificationImpl::monitoringConfig).all {
+                prop(StepMonitoringConfiguration::events).isTrue()
+                prop(StepMonitoringConfiguration::meters).isTrue()
             }
             prop(MongoDbPollStepSpecificationImpl::singletonConfiguration).all {
                 prop(SingletonConfiguration::type).isEqualTo(SingletonType.BROADCAST)

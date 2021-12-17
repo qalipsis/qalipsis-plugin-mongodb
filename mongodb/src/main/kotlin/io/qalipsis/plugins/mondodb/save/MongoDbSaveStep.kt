@@ -28,7 +28,7 @@ internal class MongoDbSaveStep<I>(
 ) : AbstractStep<I, MongoDBSaveResult<I>>(id, retryPolicy) {
 
     override suspend fun start(context: StepStartStopContext) {
-        mongoDbSaveQueryClient.start()
+        mongoDbSaveQueryClient.start(context)
     }
 
     override suspend fun execute(context: StepContext<I, MongoDBSaveResult<I>>) {
@@ -43,6 +43,6 @@ internal class MongoDbSaveStep<I>(
     }
 
     override suspend fun stop(context: StepStartStopContext) {
-        mongoDbSaveQueryClient.stop()
+        mongoDbSaveQueryClient.stop(context)
     }
 }

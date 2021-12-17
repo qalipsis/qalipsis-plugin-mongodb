@@ -7,8 +7,8 @@ import com.mongodb.reactivestreams.client.MongoClients
 import io.aerisconsulting.catadioptre.getProperty
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.DummyStepSpecification
+import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.plugins.mondodb.mongodb
-import io.qalipsis.plugins.mondodb.save.MongoDbSaveMetricsConfiguration
 import io.qalipsis.plugins.mondodb.save.MongoDbSaveQueryConfiguration
 import io.qalipsis.plugins.mondodb.save.MongoDbSaveStepSpecificationImpl
 import io.qalipsis.plugins.mondodb.save.save
@@ -58,9 +58,9 @@ internal class MongoDbSaveStepSpecificationImplTest {
             prop(MongoDbSaveStepSpecificationImpl<*>::queryConfig).all {
                 prop(MongoDbSaveQueryConfiguration<*>::records).isEqualTo(recordSupplier)
             }
-            prop(MongoDbSaveStepSpecificationImpl<*>::metrics).isNotNull().all {
-                prop(MongoDbSaveMetricsConfiguration::events).isFalse()
-                prop(MongoDbSaveMetricsConfiguration::meters).isFalse()
+            prop(MongoDbSaveStepSpecificationImpl<*>::monitoringConfig).isNotNull().all {
+                prop(StepMonitoringConfiguration::events).isFalse()
+                prop(StepMonitoringConfiguration::meters).isFalse()
             }
         }
 
@@ -89,9 +89,9 @@ internal class MongoDbSaveStepSpecificationImplTest {
                 collection = collectionName
                 records = recordSupplier
             }
-            metrics {
-                meters = true
+            monitoring {
                 events = true
+                meters = true
             }
         }
 
@@ -101,9 +101,9 @@ internal class MongoDbSaveStepSpecificationImplTest {
             prop(MongoDbSaveStepSpecificationImpl<*>::queryConfig).all {
                 prop(MongoDbSaveQueryConfiguration<*>::records).isEqualTo(recordSupplier)
             }
-            prop(MongoDbSaveStepSpecificationImpl<*>::metrics).all {
-                prop(MongoDbSaveMetricsConfiguration::events).isTrue()
-                prop(MongoDbSaveMetricsConfiguration::meters).isTrue()
+            prop(MongoDbSaveStepSpecificationImpl<*>::monitoringConfig).all {
+                prop(StepMonitoringConfiguration::events).isTrue()
+                prop(StepMonitoringConfiguration::meters).isTrue()
             }
         }
 

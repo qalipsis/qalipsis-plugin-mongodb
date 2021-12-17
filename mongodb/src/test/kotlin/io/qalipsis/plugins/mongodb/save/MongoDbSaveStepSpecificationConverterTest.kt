@@ -11,19 +11,16 @@ import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import com.mongodb.reactivestreams.client.MongoClient
-import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.spyk
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.StepCreationContext
 import io.qalipsis.api.steps.StepCreationContextImpl
-import io.qalipsis.plugins.mondodb.save.MongoDbSaveQueryMeterRegistry
 import io.qalipsis.plugins.mondodb.save.MongoDbSaveStepSpecificationConverter
 import io.qalipsis.plugins.mondodb.save.MongoDbSaveStepSpecificationImpl
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
-import io.qalipsis.test.mockk.verifyNever
 import io.qalipsis.test.steps.AbstractStepSpecificationConverterTest
 import kotlinx.coroutines.test.runBlockingTest
 import org.bson.Document
@@ -48,9 +45,6 @@ internal class MongoDbSaveStepSpecificationConverterTest :
             Document("key3-1", "val3-1")
         )
     }
-
-    @RelaxedMockK
-    private lateinit var mongoDbQueryMeterRegistry: MongoDbSaveQueryMeterRegistry
 
     @RelaxedMockK
     private lateinit var clientBuilder: () -> MongoClient
@@ -82,14 +76,13 @@ internal class MongoDbSaveStepSpecificationConverterTest :
                 records = recordSupplier
             }
             it.retryPolicy = mockedRetryPolicy
-            it.metrics {
+            it.monitoring {
                 meters = true
+                events = true
             }
         }
         val creationContext = StepCreationContextImpl(scenarioSpecification, directedAcyclicGraph, spec)
         val spiedConverter = spyk(converter, recordPrivateCalls = true)
-        every { spiedConverter["buildMetrics"](eq("mongodb-save-step")) } returns mongoDbQueryMeterRegistry
-
         // when
         spiedConverter.convert<Unit, Map<String, *>>(
             creationContext as StepCreationContext<MongoDbSaveStepSpecificationImpl<*>>
@@ -100,8 +93,8 @@ internal class MongoDbSaveStepSpecificationConverterTest :
             prop("id").isNotNull().isEqualTo("mongodb-save-step")
             prop("mongoDbSaveQueryClient").all {
                 prop("clientBuilder").isNotNull().isSameAs(clientBuilder)
-                prop("mongoDbSaveMeterRegistry").isNotNull().isSameAs(mongoDbQueryMeterRegistry)
-                prop("eventsLogger").isNull()
+                prop("meterRegistry").isNotNull().isSameAs(meterRegistry)
+                prop("eventsLogger").isNotNull().isSameAs(eventsLogger)
             }
             prop("retryPolicy").isNotNull()
             prop("databaseName").isEqualTo(databaseName)
@@ -121,7 +114,7 @@ internal class MongoDbSaveStepSpecificationConverterTest :
                 records = recordSupplier
             }
             it.clientBuilder = clientBuilder
-            it.metrics {
+            it.monitoring {
                 events = true
             }
         }
@@ -142,11 +135,10 @@ internal class MongoDbSaveStepSpecificationConverterTest :
             prop("recordsFactory").isSameAs(recordSupplier)
             prop("mongoDbSaveQueryClient").all {
                 prop("clientBuilder").isNotNull().isSameAs(clientBuilder)
-                prop("mongoDbSaveMeterRegistry").isNull()
+                prop("meterRegistry").isNull()
                 prop("eventsLogger").isNotNull().isSameAs(eventsLogger)
             }
         }
-        verifyNever { spiedConverter["buildMetrics"](any<String>()) }
     }
 
     // TODO Test the builder method for the meter registry.

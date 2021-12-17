@@ -7,6 +7,7 @@ import com.mongodb.reactivestreams.client.MongoClients
 import io.aerisconsulting.catadioptre.getProperty
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.DummyStepSpecification
+import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.plugins.mondodb.*
 import io.qalipsis.test.mockk.relaxedMockk
 import kotlinx.coroutines.runBlocking
@@ -45,9 +46,9 @@ internal class MongoDbSearchStepSpecificationImplTest {
                 prop(MongoDbQueryConfiguration<*>::query).isNotNull()
                 prop(MongoDbQueryConfiguration<*>::sort).isNotNull()
             }
-            prop(MongoDbSearchStepSpecificationImpl<*>::metrics).isNotNull().all {
-                prop(MongoDbSearchMetricsConfiguration::events).isFalse()
-                prop(MongoDbSearchMetricsConfiguration::meters).isFalse()
+            prop(MongoDbSearchStepSpecificationImpl<*>::monitoringConfig).isNotNull().all {
+                prop(StepMonitoringConfiguration::events).isFalse()
+                prop(StepMonitoringConfiguration::meters).isFalse()
             }
             prop(MongoDbSearchStepSpecificationImpl<*>::flattenOutput).isFalse()
         }
@@ -90,7 +91,7 @@ internal class MongoDbSearchStepSpecificationImplTest {
                 sort = { _, _ -> linkedMapOf("desc" to Sorting.DESC) }
             }
 
-            metrics {
+            monitoring {
                 events = true
                 meters = true
             }
@@ -106,9 +107,9 @@ internal class MongoDbSearchStepSpecificationImplTest {
                 prop(MongoDbQueryConfiguration<*>::query).isNotNull()
                 prop(MongoDbQueryConfiguration<*>::sort).isNotNull()
             }
-            prop(MongoDbSearchStepSpecificationImpl<*>::metrics).all {
-                prop(MongoDbSearchMetricsConfiguration::events).isTrue()
-                prop(MongoDbSearchMetricsConfiguration::meters).isTrue()
+            prop(MongoDbSearchStepSpecificationImpl<*>::monitoringConfig).all {
+                prop(StepMonitoringConfiguration::events).isTrue()
+                prop(StepMonitoringConfiguration::meters).isTrue()
             }
             prop(MongoDbSearchStepSpecificationImpl<*>::flattenOutput).isTrue()
         }

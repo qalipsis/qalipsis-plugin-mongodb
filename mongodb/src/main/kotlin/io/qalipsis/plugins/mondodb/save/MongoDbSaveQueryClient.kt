@@ -1,5 +1,6 @@
 package io.qalipsis.plugins.mondodb.save
 
+import io.qalipsis.api.context.StepStartStopContext
 import org.bson.Document
 
 
@@ -13,7 +14,7 @@ internal interface MongoDbSaveQueryClient {
     /**
      * Initializes the client and connects to the MongoDB server.
      */
-    suspend fun start()
+    suspend fun start(context: StepStartStopContext)
 
     /**
      * Inserts records to the MongoDB server.
@@ -26,5 +27,5 @@ internal interface MongoDbSaveQueryClient {
     /**
      * Cleans the client and closes the connections to the MongoDB server.
      */
-    suspend fun stop()
+    suspend fun stop(context: StepStartStopContext)
 }

@@ -2,6 +2,10 @@ package io.qalipsis.plugins.mondodb.save
 
 import com.mongodb.client.result.InsertManyResult
 import com.mongodb.reactivestreams.client.MongoClient
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Timer
+import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.lang.tryAndLog
 import io.qalipsis.api.logging.LoggerHelper.logger
@@ -12,6 +16,7 @@ import org.bson.Document
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import java.time.Duration
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -21,21 +26,41 @@ import java.util.concurrent.atomic.AtomicInteger
  * Client to query to MongoDB.
  *
  * @property clientBuilder supplier for the MongoDb client.
- * @property mongoDbSaveMeterRegistry the metrics for the query operation.
+ * @property eventsLogger the logger for events to track what happens during save query execution.
+ * @property meterRegistry registry for the meters.
  *
  * @author Alexander Sosnovsky
  */
 internal class MongoDbSaveQueryClientImpl(
     private val ioCoroutineScope: CoroutineScope,
     private val clientBuilder: () -> MongoClient,
-    private val mongoDbSaveMeterRegistry: MongoDbSaveQueryMeterRegistry?,
-    private var eventsLogger: EventsLogger?
+    private var eventsLogger: EventsLogger?,
+    private val meterRegistry: MeterRegistry?
 ) : MongoDbSaveQueryClient {
 
     private lateinit var client: MongoClient
 
-    override suspend fun start() {
+    private val eventPrefix = "mongodb.save"
+
+    private val meterPrefix = "mongodb-save"
+
+    private var recordsCounter: Counter? = null
+
+    private var timeToResponse: Timer? = null
+
+    private var successCounter: Counter? = null
+
+    private var failureCounter: Counter? = null
+
+    override suspend fun start(context: StepStartStopContext) {
         client = clientBuilder()
+        meterRegistry?.apply {
+            val tags = context.toMetersTags()
+            recordsCounter = counter("$meterPrefix-saving-records", tags)
+            timeToResponse = timer("$meterPrefix-time-to-response", tags)
+            successCounter = counter("$meterPrefix-successes", tags)
+            failureCounter = counter("$meterPrefix-failures", tags)
+        }
     }
 
     override suspend fun execute(
@@ -47,7 +72,7 @@ internal class MongoDbSaveQueryClientImpl(
         val result = Slot<Result<MongoDbSaveQueryMeters>>()
         val isFirst = AtomicBoolean(true)
 
-        eventsLogger?.info("mongodb.save.saving-records", records.size, tags = contextEventTags)
+        eventsLogger?.debug("$eventPrefix.saving-records", records.size, tags = contextEventTags)
         val requestStart = System.nanoTime()
         val saved = AtomicInteger()
         client.getDatabase(dbName)
@@ -61,7 +86,13 @@ internal class MongoDbSaveQueryClientImpl(
                 override fun onNext(result: InsertManyResult) {
                     // flag isFirst is only use to know what is the first save document.
                     if (isFirst.get()) {
-                        mongoDbSaveMeterRegistry?.recordTimeToResponse(System.nanoTime() - requestStart)
+                        val timeDuration = System.nanoTime() - requestStart
+                        eventsLogger?.info(
+                            "$eventPrefix.time-to-response",
+                            Duration.ofNanos(timeDuration),
+                            tags = contextEventTags
+                        )
+                        timeToResponse?.record(timeDuration, TimeUnit.NANOSECONDS)
                         isFirst.set(false)
                     }
                     saved.addAndGet(result.insertedIds.size)
@@ -69,8 +100,8 @@ internal class MongoDbSaveQueryClientImpl(
 
                 override fun onError(error: Throwable) {
                     val duration = Duration.ofNanos(System.nanoTime() - requestStart)
-                    eventsLogger?.warn("mongodb.save.failure", arrayOf(error, duration), tags = contextEventTags)
-                    mongoDbSaveMeterRegistry?.countFailure(records.size)
+                    eventsLogger?.warn("$eventPrefix.failure", arrayOf(error, duration), tags = contextEventTags)
+                    failureCounter?.increment(records.size.toDouble())
 
                     ioCoroutineScope.launch {
                         result.set(Result.failure(error))
@@ -80,16 +111,16 @@ internal class MongoDbSaveQueryClientImpl(
                 override fun onComplete() {
                     val duration = Duration.ofNanos(System.nanoTime() - requestStart)
                     eventsLogger?.info(
-                        "mongodb.save.successful-response",
+                        "$eventPrefix.saved-records",
                         arrayOf(duration, saved),
                         tags = contextEventTags
                     )
                     val failed = records.size - saved.get()
-                    mongoDbSaveMeterRegistry?.countRecords(saved.get())
+                    recordsCounter?.increment(saved.get().toDouble())
                     if (failed > 0) {
-                        mongoDbSaveMeterRegistry?.countFailure(failed)
+                        failureCounter?.increment(failed.toDouble())
                         eventsLogger?.warn(
-                            "mongodb.save.failed-response",
+                            "$eventPrefix.failed-records",
                             failed,
                             tags = contextEventTags
                         )
@@ -102,7 +133,17 @@ internal class MongoDbSaveQueryClientImpl(
         return result.get().getOrThrow()
     }
 
-    override suspend fun stop() {
+    override suspend fun stop(context: StepStartStopContext) {
+        meterRegistry?.apply {
+            remove(recordsCounter!!)
+            remove(timeToResponse!!)
+            remove(successCounter!!)
+            remove(failureCounter!!)
+            recordsCounter = null
+            timeToResponse = null
+            successCounter = null
+            failureCounter = null
+        }
         tryAndLog(log) {
             client.close()
         }
