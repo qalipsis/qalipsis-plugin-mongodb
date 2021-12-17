@@ -26,7 +26,6 @@ import io.qalipsis.plugins.mondodb.Sorting
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentConverter
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentSearchBatchConverter
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentSearchSingleConverter
-import io.qalipsis.plugins.mondodb.search.MongoDbQueryMeterRegistry
 import io.qalipsis.plugins.mondodb.search.MongoDbSearchStep
 import io.qalipsis.plugins.mondodb.search.MongoDbSearchStepSpecificationConverter
 import io.qalipsis.test.assertk.prop
@@ -55,9 +54,6 @@ internal class MongoDbSearchStepSpecificationConverterTest :
 
     private val sorting: (suspend (ctx: StepContext<*, *>, input: Any) -> LinkedHashMap<String, Sorting>) =
         { _, _ -> linkedMapOf("asc" to Sorting.ASC, "desc" to Sorting.DESC) }
-
-    @RelaxedMockK
-    private lateinit var mongoDbQueryMeterRegistry: MongoDbQueryMeterRegistry
 
     @RelaxedMockK
     private lateinit var clientFactory: () -> MongoClient
@@ -92,7 +88,7 @@ internal class MongoDbSearchStepSpecificationConverterTest :
             )
             it.clientFactory = clientFactory
             it.retryPolicy = mockedRetryPolicy
-            it.metrics {
+            it.monitoring {
                 meters = true
             }
         }
@@ -101,7 +97,6 @@ internal class MongoDbSearchStepSpecificationConverterTest :
 
         val recordsConverter: MongoDbDocumentConverter<MongoDBQueryResult, out Any, *> = relaxedMockk()
         every { spiedConverter["buildConverter"](refEq(spec)) } returns recordsConverter
-        every { spiedConverter["buildMetrics"](eq("mongodb-search-step")) } returns mongoDbQueryMeterRegistry
 
         // when
         spiedConverter.convert<Unit, Map<String, *>>(
@@ -115,8 +110,8 @@ internal class MongoDbSearchStepSpecificationConverterTest :
                 prop("mongoDbQueryClient").all {
                     prop("ioCoroutineScope").isSameAs(ioCoroutineScope)
                     prop("clientFactory").isNotNull().isSameAs(clientFactory)
-                    prop("mongoDbMeterRegistry").isSameAs(mongoDbQueryMeterRegistry)
                     prop("eventsLogger").isNull()
+                    prop("meterRegistry").isNotNull().isSameAs(meterRegistry)
                 }
                 prop("retryPolicy").isNotNull()
                 prop("databaseName").isEqualTo(databaseName)
@@ -126,7 +121,6 @@ internal class MongoDbSearchStepSpecificationConverterTest :
                 prop("converter").isNotNull().isSameAs(recordsConverter)
             }
         }
-        verifyOnce { spiedConverter["buildMetrics"](eq(spec.name)) }
         verifyOnce { spiedConverter["buildConverter"](refEq(spec)) }
     }
 
@@ -142,7 +136,7 @@ internal class MongoDbSearchStepSpecificationConverterTest :
                 sort = sorting
             )
             it.clientFactory = clientFactory
-            it.metrics {
+            it.monitoring {
                 events = true
             }
         }
@@ -170,7 +164,7 @@ internal class MongoDbSearchStepSpecificationConverterTest :
                 prop("mongoDbQueryClient").all {
                     prop("ioCoroutineScope").isSameAs(ioCoroutineScope)
                     prop("clientFactory").isNotNull().isSameAs(clientFactory)
-                    prop("mongoDbMeterRegistry").isNull()
+                    prop("meterRegistry").isNull()
                     prop("eventsLogger").isNotNull().isSameAs(eventsLogger)
                 }
             }
@@ -202,6 +196,4 @@ internal class MongoDbSearchStepSpecificationConverterTest :
         // then
         assertThat(converter).isInstanceOf(MongoDbDocumentSearchSingleConverter::class)
     }
-
-    // TODO Test the builder method for the meter registry.
 }

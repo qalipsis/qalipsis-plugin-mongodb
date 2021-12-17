@@ -34,11 +34,11 @@ internal class MongoDbSearchStep<I>(
     private val collectionName: (suspend (ctx: StepContext<*, *>, input: I) -> String),
     private val filter: (suspend (ctx: StepContext<*, *>, input: I) -> Bson),
     private val sorting: (suspend (ctx: StepContext<*, *>, input: I) -> LinkedHashMap<String, Sorting>),
-    private val converter: MongoDbDocumentConverter<List<Document>, Any?, I>
+    private val converter: MongoDbDocumentConverter<List<Document>, Any?, I>,
 ) : AbstractStep<I, Pair<I, List<MongoDbRecord>>>(id, retryPolicy) {
 
     override suspend fun start(context: StepStartStopContext) {
-        mongoDbQueryClient.init()
+        mongoDbQueryClient.start(context)
     }
 
     override suspend fun execute(context: StepContext<I, Pair<I, List<MongoDbRecord>>>) {
@@ -58,6 +58,6 @@ internal class MongoDbSearchStep<I>(
     }
 
     override suspend fun stop(context: StepStartStopContext) {
-        mongoDbQueryClient.stop()
+        mongoDbQueryClient.stop(context)
     }
 }

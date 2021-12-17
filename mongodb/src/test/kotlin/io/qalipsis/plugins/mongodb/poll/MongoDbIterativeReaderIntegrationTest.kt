@@ -8,12 +8,10 @@ import assertk.assertions.index
 import assertk.assertions.isEqualTo
 import assertk.assertions.key
 import com.mongodb.reactivestreams.client.MongoClients
-import io.mockk.impl.annotations.RelaxedMockK
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.plugins.mondodb.Sorting
 import io.qalipsis.plugins.mondodb.poll.MongoDbIterativeReader
 import io.qalipsis.plugins.mondodb.poll.MongoDbPollStatement
-import io.qalipsis.plugins.mondodb.search.MongoDbQueryMeterRegistry
 import io.qalipsis.plugins.mongodb.configuration.AbstractMongoDbIntegrationTest
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
@@ -28,9 +26,6 @@ import java.time.Duration
 
 @WithMockk
 internal class MongoDbIterativeReaderIntegrationTest : AbstractMongoDbIntegrationTest() {
-
-    @RelaxedMockK
-    private lateinit var queryMeterRegistry: MongoDbQueryMeterRegistry
 
     private val eventsLogger = relaxedMockk<EventsLogger>()
 
@@ -60,9 +55,9 @@ internal class MongoDbIterativeReaderIntegrationTest : AbstractMongoDbIntegratio
             clientBuilder = client,
             pollStatement = pollStatement,
             pollDelay = Duration.ofMillis(300),
-            eventsLogger = eventsLogger,
-            mongoDbPollMeterRegistry = queryMeterRegistry,
-            coroutineScope = this
+            coroutineScope = this,
+            eventsLogger = null,
+            meterRegistry = null
         )
 
         reader.start(relaxedMockk())
@@ -119,9 +114,9 @@ internal class MongoDbIterativeReaderIntegrationTest : AbstractMongoDbIntegratio
             clientBuilder = client,
             pollStatement = pollStatement,
             pollDelay = Duration.ofMillis(300),
-            eventsLogger = eventsLogger,
-            mongoDbPollMeterRegistry = queryMeterRegistry,
-            coroutineScope = this
+            coroutineScope = this,
+            eventsLogger = null,
+            meterRegistry = null
         )
 
         reader.start(relaxedMockk())

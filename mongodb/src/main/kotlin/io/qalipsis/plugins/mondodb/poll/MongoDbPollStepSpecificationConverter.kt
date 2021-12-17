@@ -1,10 +1,8 @@
 package io.qalipsis.plugins.mondodb.poll
 
-import io.aerisconsulting.catadioptre.KTestable
 import io.micrometer.core.instrument.MeterRegistry
 import io.qalipsis.api.Executors
 import io.qalipsis.api.annotations.StepConverter
-import io.qalipsis.api.context.StepName
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.lang.supplyIf
 import io.qalipsis.api.steps.StepCreationContext
@@ -17,7 +15,6 @@ import io.qalipsis.plugins.mondodb.MongoDBQueryResult
 import io.qalipsis.plugins.mondodb.MongoDbPollStepSpecificationImpl
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollBatchConverter
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollSingleConverter
-import io.qalipsis.plugins.mondodb.search.MongoDbQueryMeterRegistry
 import jakarta.inject.Named
 import kotlinx.coroutines.CoroutineScope
 
@@ -29,7 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 @StepConverter
 internal class MongoDbPollStepSpecificationConverter(
     private val meterRegistry: MeterRegistry,
-    private var eventsLogger: EventsLogger,
+    private val eventsLogger: EventsLogger,
     @Named(Executors.IO_EXECUTOR_NAME) private val coroutineScope: CoroutineScope
 ) : StepSpecificationConverter<MongoDbPollStepSpecificationImpl> {
 
@@ -42,17 +39,13 @@ internal class MongoDbPollStepSpecificationConverter(
         val pollStatement = buildPollStatement(spec)
         val stepId = spec.name
 
-        val mongoDbPollMetrics = supplyIf(spec.metrics.meters) {
-            buildMetrics(spec.name)
-        }
-
         val reader = MongoDbIterativeReader(
             coroutineScope = coroutineScope,
             clientBuilder = spec.client,
             pollStatement = pollStatement,
             pollDelay = spec.pollPeriod,
-            eventsLogger = eventsLogger.takeIf { spec.metrics.events },
-            mongoDbPollMeterRegistry = mongoDbPollMetrics
+            eventsLogger = supplyIf(spec.monitoringConfig.events) { eventsLogger },
+            meterRegistry = supplyIf(spec.monitoringConfig.meters) { meterRegistry }
         )
 
         val converter = buildConverter(spec)
@@ -93,15 +86,5 @@ internal class MongoDbPollStepSpecificationConverter(
                 spec.searchConfig.collection
             )
         }
-    }
-
-    @KTestable
-    private fun buildMetrics(stepId: StepName): MongoDbQueryMeterRegistry {
-        return MongoDbQueryMeterRegistry(
-            recordsCount = meterRegistry.counter("mongodb-poll-received-records", "step", stepId),
-            failureCounter = meterRegistry.counter("mongodb-poll-failures", "step", stepId),
-            successCounter = meterRegistry.counter("mongodb-poll-successes", "step", stepId),
-            timeToResponse = meterRegistry.timer("mongodb-poll-time-to-response", "step", stepId)
-        )
     }
 }

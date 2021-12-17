@@ -1,11 +1,8 @@
 package io.qalipsis.plugins.mondodb.search
-
-import io.aerisconsulting.catadioptre.KTestable
 import io.micrometer.core.instrument.MeterRegistry
 import io.qalipsis.api.Executors
 import io.qalipsis.api.annotations.StepConverter
 import io.qalipsis.api.context.StepContext
-import io.qalipsis.api.context.StepName
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.lang.supplyIf
 import io.qalipsis.api.steps.StepCreationContext
@@ -41,9 +38,6 @@ internal class MongoDbSearchStepSpecificationConverter(
     override suspend fun <I, O> convert(creationContext: StepCreationContext<MongoDbSearchStepSpecificationImpl<*>>) {
         val spec = creationContext.stepSpecification
         val stepId = spec.name
-        val metrics = supplyIf(spec.metrics.meters) {
-            buildMetrics(stepId)
-        }
 
         @Suppress("UNCHECKED_CAST")
         val step = MongoDbSearchStep(
@@ -52,8 +46,10 @@ internal class MongoDbSearchStepSpecificationConverter(
             mongoDbQueryClient = MongoDbQueryClientImpl(
                 ioCoroutineScope,
                 spec.clientFactory,
-                metrics,
-                eventsLogger.takeIf { spec.metrics.events }),
+                eventsLogger = supplyIf(spec.monitoringConfig.events) { eventsLogger },
+                meterRegistry = supplyIf(spec.monitoringConfig.meters) { meterRegistry }
+            ),
+
             databaseName = spec.searchConfig.database as suspend (ctx: StepContext<*, *>, input: Any?) -> String,
             collectionName = spec.searchConfig.collection as suspend (ctx: StepContext<*, *>, input: Any?) -> String,
             filter = spec.searchConfig.query as suspend (ctx: StepContext<*, *>, input: Any?) -> Document,
@@ -61,16 +57,6 @@ internal class MongoDbSearchStepSpecificationConverter(
             converter = buildConverter(spec) as MongoDbDocumentConverter<List<Document>, Any?, Any?>
         )
         creationContext.createdStep(step)
-    }
-
-    @KTestable
-    private fun buildMetrics(stepId: StepName): MongoDbQueryMeterRegistry {
-        return MongoDbQueryMeterRegistry(
-            recordsCount = meterRegistry.counter("mongodb-search-received-records", "step", stepId),
-            failureCounter = meterRegistry.counter("mongodb-search-failures", "step", stepId),
-            successCounter = meterRegistry.counter("mongodb-search-successes", "step", stepId),
-            timeToResponse = meterRegistry.timer("mongodb-search-time-to-response", "step", stepId)
-        )
     }
 
     private fun buildConverter(

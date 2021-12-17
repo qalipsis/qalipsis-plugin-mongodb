@@ -8,6 +8,7 @@ import io.qalipsis.api.steps.BroadcastSpecification
 import io.qalipsis.api.steps.LoopableSpecification
 import io.qalipsis.api.steps.SingletonConfiguration
 import io.qalipsis.api.steps.SingletonType
+import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.api.steps.StepSpecification
 import io.qalipsis.api.steps.UnicastSpecification
 import io.qalipsis.plugins.mondodb.poll.MongoDBPollResults
@@ -50,9 +51,9 @@ interface MongoDbPollStepSpecification :
     fun pollDelay(delayMillis: Long)
 
     /**
-     * Configures the metrics of the poll step.
+     * Configures the monitoring of the poll step.
      */
-    fun metrics(metricsConfiguration: MongoDbMetricsConfiguration.() -> Unit)
+    fun monitoring(monitoringConfig: StepMonitoringConfiguration.() -> Unit)
 }
 
 /**
@@ -75,9 +76,9 @@ class MongoDbPollStepSpecificationImpl :
     @field:NotNull
     internal var pollPeriod: Duration = Duration.ofSeconds(DefaultValues.pollDurationInSeconds)
 
-    internal val metrics = MongoDbMetricsConfiguration()
-
     internal var flattenOutput = false
+
+    internal var monitoringConfig = StepMonitoringConfiguration()
 
     override fun connect(client: () -> com.mongodb.reactivestreams.client.MongoClient) {
         this.client = client
@@ -95,15 +96,15 @@ class MongoDbPollStepSpecificationImpl :
         pollPeriod = duration
     }
 
-    override fun metrics(metricsConfiguration: MongoDbMetricsConfiguration.() -> Unit) {
-        metrics.metricsConfiguration()
-    }
-
     override fun flatten(): StepSpecification<Unit, MongoDbRecord, *> {
         flattenOutput = true
 
         @Suppress("UNCHECKED_CAST")
         return this as StepSpecification<Unit, MongoDbRecord, *>
+    }
+
+    override fun monitoring(monitoringConfig: StepMonitoringConfiguration.() -> Unit) {
+        this.monitoringConfig.monitoringConfig()
     }
 
 }
@@ -130,19 +131,6 @@ data class MongoDbSearchConfiguration(
     @field:NotBlank var tieBreaker: String = "",
 )
 
-/**
- * Configuration of the metrics to record for the MongoDb [poll] step.
- *
- * @property events when true, records the events of the step, defaults to false.
- * @property meters when true, records the meters of the step, defaults to false.
- *
- * @author Maxim Golokhov
- */
-@Spec
-data class MongoDbMetricsConfiguration(
-    var events: Boolean = false,
-    var meters: Boolean = false
-)
 
 /**
  * Creates a Poll step in order to periodically fetch data from a MongoDb database.

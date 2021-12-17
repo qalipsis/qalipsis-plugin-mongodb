@@ -4,6 +4,7 @@ import com.mongodb.reactivestreams.client.MongoClients
 import io.qalipsis.api.annotations.Spec
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.AbstractStepSpecification
+import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.api.steps.StepSpecification
 import org.bson.Document
 
@@ -27,14 +28,14 @@ interface MongoDbSearchStepSpecification<I> :
     fun search(searchConfiguration: MongoDbQueryConfiguration<I>.() -> Unit)
 
     /**
-     * Configures the metrics of the step.
-     */
-    fun metrics(metricsConfiguration: MongoDbSearchMetricsConfiguration.() -> Unit)
-
-    /**
      * Returns each record of a batch individually to the next steps.
      */
     fun flatten(): StepSpecification<I, MongoDbRecord, *>
+
+    /**
+     * Configures the monitoring of the search step.
+     */
+    fun monitoring(monitoringConfig: StepMonitoringConfiguration.() -> Unit)
 }
 
 /**
@@ -51,7 +52,7 @@ internal class MongoDbSearchStepSpecificationImpl<I> :
 
     internal var searchConfig = MongoDbQueryConfiguration<I>()
 
-    internal val metrics = MongoDbSearchMetricsConfiguration()
+    internal var monitoringConfig = StepMonitoringConfiguration()
 
     internal var flattenOutput = false
 
@@ -63,15 +64,15 @@ internal class MongoDbSearchStepSpecificationImpl<I> :
         searchConfig.searchConfiguration()
     }
 
-    override fun metrics(metricsConfiguration: MongoDbSearchMetricsConfiguration.() -> Unit) {
-        metrics.metricsConfiguration()
-    }
-
     override fun flatten(): StepSpecification<I, MongoDbRecord, *> {
         flattenOutput = true
 
         @Suppress("UNCHECKED_CAST")
         return this as StepSpecification<I, MongoDbRecord, *>
+    }
+
+    override fun monitoring(monitoringConfig: StepMonitoringConfiguration.() -> Unit) {
+        this.monitoringConfig.monitoringConfig()
     }
 }
 
@@ -87,20 +88,6 @@ data class MongoDbQueryConfiguration<I>(
     internal var collection: suspend (ctx: StepContext<*, *>, input: I) -> String = { _, _ -> "" },
     internal var query: suspend (ctx: StepContext<*, *>, input: I) -> Document = { _, _ -> Document() },
     internal var sort: suspend (ctx: StepContext<*, *>, input: I) -> LinkedHashMap<String, Sorting> = { _, _ -> linkedMapOf() }
-)
-
-/**
- * Configuration of the metrics to record for the MongoDB [search] step.
- *
- * @property events when true, records the events of the step, defaults to false.
- * @property meters when true, records the meters of the step, defaults to false.
- *
- * @author Alexander Sosnovsky
- */
-@Spec
-data class MongoDbSearchMetricsConfiguration(
-    var events: Boolean = false,
-    var meters: Boolean = false
 )
 
 /**

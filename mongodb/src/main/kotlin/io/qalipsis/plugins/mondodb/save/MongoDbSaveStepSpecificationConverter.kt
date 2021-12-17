@@ -1,11 +1,9 @@
 package io.qalipsis.plugins.mondodb.save
 
-import io.aerisconsulting.catadioptre.KTestable
 import io.micrometer.core.instrument.MeterRegistry
 import io.qalipsis.api.Executors
 import io.qalipsis.api.annotations.StepConverter
 import io.qalipsis.api.context.StepContext
-import io.qalipsis.api.context.StepName
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.lang.supplyIf
 import io.qalipsis.api.steps.StepCreationContext
@@ -35,9 +33,6 @@ internal class MongoDbSaveStepSpecificationConverter(
     override suspend fun <I, O> convert(creationContext: StepCreationContext<MongoDbSaveStepSpecificationImpl<*>>) {
         val spec = creationContext.stepSpecification
         val stepId = spec.name
-        val metrics = supplyIf(spec.metrics.meters) {
-            buildMetrics(stepId)
-        }
 
         @Suppress("UNCHECKED_CAST")
         val step = MongoDbSaveStep(
@@ -46,23 +41,14 @@ internal class MongoDbSaveStepSpecificationConverter(
             mongoDbSaveQueryClient = MongoDbSaveQueryClientImpl(
                 ioCoroutineScope,
                 spec.clientBuilder,
-                metrics,
-                eventsLogger.takeIf { spec.metrics.events }),
+                eventsLogger = supplyIf(spec.monitoringConfig.events) { eventsLogger },
+                meterRegistry = supplyIf(spec.monitoringConfig.meters) { meterRegistry }
+            ),
             databaseName = spec.queryConfig.database as suspend (ctx: StepContext<*, *>, input: Any?) -> String,
             collectionName = spec.queryConfig.collection as suspend (ctx: StepContext<*, *>, input: Any?) -> String,
             recordsFactory = spec.queryConfig.records as suspend (ctx: StepContext<*, *>, input: I) -> List<Document>,
         )
         creationContext.createdStep(step)
-    }
-
-    @KTestable
-    private fun buildMetrics(stepId: StepName): MongoDbSaveQueryMeterRegistry {
-        return MongoDbSaveQueryMeterRegistry(
-            recordsCount = meterRegistry.counter("mongodb-save-saved-records", "step", stepId),
-            failureCounter = meterRegistry.counter("mongodb-save-failures", "step", stepId),
-            successCounter = meterRegistry.counter("mongodb-save-successes", "step", stepId),
-            timeToResponse = meterRegistry.timer("mongodb-save-time-to-response", "step", stepId)
-        )
     }
 
 }

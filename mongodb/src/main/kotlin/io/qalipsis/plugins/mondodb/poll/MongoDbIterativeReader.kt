@@ -2,6 +2,9 @@ package io.qalipsis.plugins.mondodb.poll
 
 import com.mongodb.reactivestreams.client.MongoClient
 import io.aerisconsulting.catadioptre.KTestable
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Timer
 import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.logging.LoggerHelper.logger
@@ -9,7 +12,6 @@ import io.qalipsis.api.steps.datasource.DatasourceIterativeReader
 import io.qalipsis.api.sync.Latch
 import io.qalipsis.plugins.mondodb.MongoDBQueryResult
 import io.qalipsis.plugins.mondodb.MongoDbQueryMeters
-import io.qalipsis.plugins.mondodb.search.MongoDbQueryMeterRegistry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -33,6 +35,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @property resultsChannelFactory factory to create the channel containing the received results sets
  * @property running running state of the reader
  * @property pollingJob instance of the background job polling data from the database
+ * @property eventsLogger the logger for events to track what happens during save query execution.
+ * @property meterRegistry registry for the meters.
  *
  * @author Maxim Golokhov
  */
@@ -42,9 +46,13 @@ internal class MongoDbIterativeReader(
     private val pollStatement: MongoDbPollStatement,
     private val pollDelay: Duration,
     private val resultsChannelFactory: () -> Channel<MongoDBQueryResult> = { Channel(Channel.UNLIMITED) },
-    private var eventsLogger: EventsLogger?,
-    private var mongoDbPollMeterRegistry: MongoDbQueryMeterRegistry?
+    private val eventsLogger: EventsLogger?,
+    private val meterRegistry: MeterRegistry?
 ) : DatasourceIterativeReader<MongoDBQueryResult> {
+
+    private val eventPrefix = "mongodb.poll"
+
+    private val meterPrefix = "mongodb-poll"
 
     private var running = false
 
@@ -58,8 +66,23 @@ internal class MongoDbIterativeReader(
 
     private var latestId: Any? = null
 
+    private var recordsCount: Counter? = null
+
+    private var timeToResponse: Timer? = null
+
+    private var successCounter: Counter? = null
+
+    private var failureCounter: Counter? = null
+
     override fun start(context: StepStartStopContext) {
         log.debug { "Starting the step with the context $context" }
+        meterRegistry?.apply {
+            val tags = context.toMetersTags()
+            recordsCount = counter("$meterPrefix-received-records", tags)
+            timeToResponse = timer("$meterPrefix-time-to-response", tags)
+            successCounter = counter("$meterPrefix-successes", tags)
+            failureCounter = counter("$meterPrefix-failures", tags)
+        }
         this.context = context
         init()
         pollingJob = coroutineScope.launch {
@@ -79,6 +102,16 @@ internal class MongoDbIterativeReader(
     }
 
     override fun stop(context: StepStartStopContext) {
+        meterRegistry?.apply {
+            remove(recordsCount!!)
+            remove(timeToResponse!!)
+            remove(successCounter!!)
+            remove(failureCounter!!)
+            recordsCount = null
+            timeToResponse = null
+            successCounter = null
+            failureCounter = null
+        }
         running = false
         runCatching {
             client.close()
@@ -105,7 +138,7 @@ internal class MongoDbIterativeReader(
             val results = mutableListOf<Document>()
             val isFirst = AtomicBoolean(true)
 
-            eventsLogger?.trace("mongodb.poll.polling", tags = context.toEventTags())
+            eventsLogger?.trace("$eventPrefix.polling", tags = context.toEventTags())
             val requestStart = System.nanoTime()
             client.getDatabase(pollStatement.databaseName)
                 .getCollection(pollStatement.collectionName)
@@ -118,7 +151,13 @@ internal class MongoDbIterativeReader(
 
                     override fun onNext(document: Document) {
                         if (isFirst.get()) {
-                            mongoDbPollMeterRegistry?.recordTimeToResponse(System.nanoTime() - requestStart)
+                            val timeDuration = Duration.ofNanos(System.nanoTime() - requestStart)
+                            eventsLogger?.info(
+                                "$eventPrefix.success",
+                                arrayOf(results.size, timeDuration),
+                                tags = context.toEventTags()
+                            )
+                            timeToResponse?.record(timeDuration)
                             isFirst.set(false)
                         }
 
@@ -133,11 +172,11 @@ internal class MongoDbIterativeReader(
                     override fun onError(error: Throwable) {
                         val duration = Duration.ofNanos(System.nanoTime() - requestStart)
                         eventsLogger?.warn(
-                            "mongodb.poll.failure",
+                            "$eventPrefix.failure",
                             arrayOf(error, duration),
                             tags = context.toEventTags()
                         )
-                        mongoDbPollMeterRegistry?.countFailure()
+                        failureCounter?.increment()
 
                         latch.cancel()
                     }
@@ -146,13 +185,12 @@ internal class MongoDbIterativeReader(
                         val duration = Duration.ofNanos(System.nanoTime() - requestStart)
                         coroutineScope.launch {
                             eventsLogger?.info(
-                                "mongodb.poll.successful-response",
+                                "$eventPrefix.successful-response",
                                 arrayOf(duration, results.size),
                                 tags = context.toEventTags()
                             )
-                            mongoDbPollMeterRegistry?.countSuccess()
-                            mongoDbPollMeterRegistry?.countRecords(results.size)
-
+                            successCounter?.increment()
+                            recordsCount?.increment(results.size.toDouble())
                             if (results.isNotEmpty()) {
                                 log.debug { "Received ${results.size} documents" }
                                 resultsChannel.send(

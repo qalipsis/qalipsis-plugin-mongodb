@@ -9,6 +9,7 @@ import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import com.mongodb.reactivestreams.client.MongoClient
 import io.aerisconsulting.catadioptre.getProperty
+import io.micrometer.core.instrument.MeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.impl.annotations.RelaxedMockK
@@ -20,7 +21,6 @@ import io.qalipsis.api.sync.SuspendedCountLatch
 import io.qalipsis.plugins.mondodb.MongoDBQueryResult
 import io.qalipsis.plugins.mondodb.poll.MongoDbIterativeReader
 import io.qalipsis.plugins.mondodb.poll.MongoDbPollStatement
-import io.qalipsis.plugins.mondodb.search.MongoDbQueryMeterRegistry
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
 import kotlinx.coroutines.Job
@@ -50,10 +50,10 @@ internal class MongoDbIterativeReaderTest {
     private lateinit var pollStatement: MongoDbPollStatement
 
     @RelaxedMockK
-    private lateinit var queryMeterRegistry: MongoDbQueryMeterRegistry
+    private lateinit var eventsLogger: EventsLogger
 
     @RelaxedMockK
-    private lateinit var eventsLogger: EventsLogger
+    private lateinit var meterRegistry: MeterRegistry
 
     @Test
     @Timeout(25)
@@ -66,14 +66,12 @@ internal class MongoDbIterativeReaderTest {
                 pollStatement = pollStatement,
                 pollDelay = Duration.ofMillis(300),
                 resultsChannelFactory = resultsChannelFactory,
+                coroutineScope = this,
                 eventsLogger = eventsLogger,
-                mongoDbPollMeterRegistry = queryMeterRegistry,
-                coroutineScope = this
+                meterRegistry = meterRegistry,
             ), recordPrivateCalls = true
         )
-
         coEvery { reader["poll"](refEq(client)) } coAnswers { latch.decrement() }
-
 
         // when
         reader.start(relaxedMockk { })
@@ -121,9 +119,9 @@ internal class MongoDbIterativeReaderTest {
             pollStatement = pollStatement,
             pollDelay = Duration.ofMillis(300),
             resultsChannelFactory = resultsChannelFactory,
+            coroutineScope = this,
             eventsLogger = eventsLogger,
-            mongoDbPollMeterRegistry = queryMeterRegistry,
-            coroutineScope = this
+            meterRegistry = meterRegistry
         )
 
         // then
@@ -141,9 +139,9 @@ internal class MongoDbIterativeReaderTest {
                 pollStatement = pollStatement,
                 pollDelay = Duration.ofMillis(100),
                 resultsChannelFactory = resultsChannelFactory,
+                coroutineScope = this,
                 eventsLogger = eventsLogger,
-                mongoDbPollMeterRegistry = queryMeterRegistry,
-                coroutineScope = this
+                meterRegistry = meterRegistry
             ), recordPrivateCalls = true
         )
         val countDownLatch = SuspendedCountLatch(2, true)

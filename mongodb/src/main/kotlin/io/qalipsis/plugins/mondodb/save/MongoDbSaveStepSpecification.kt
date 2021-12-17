@@ -4,6 +4,7 @@ import com.mongodb.reactivestreams.client.MongoClients
 import io.qalipsis.api.annotations.Spec
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.AbstractStepSpecification
+import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.api.steps.StepSpecification
 import io.qalipsis.plugins.mondodb.MongoDbStepSpecification
 import org.bson.Document
@@ -28,9 +29,9 @@ interface MongoDbSaveStepSpecification<I> :
     fun query(queryConfiguration: MongoDbSaveQueryConfiguration<I>.() -> Unit)
 
     /**
-     * Configures the metrics of the step.
+     * Configures the monitoring of the save step.
      */
-    fun metrics(metricsConfiguration: MongoDbSaveMetricsConfiguration.() -> Unit)
+    fun monitoring(monitoringConfig: StepMonitoringConfiguration.() -> Unit)
 
 }
 
@@ -48,7 +49,7 @@ internal class MongoDbSaveStepSpecificationImpl<I> :
 
     internal var queryConfig = MongoDbSaveQueryConfiguration<I>()
 
-    internal val metrics = MongoDbSaveMetricsConfiguration()
+    internal var monitoringConfig = StepMonitoringConfiguration()
 
     override fun connect(clientBuilder: () -> com.mongodb.reactivestreams.client.MongoClient) {
         this.clientBuilder = clientBuilder
@@ -58,8 +59,8 @@ internal class MongoDbSaveStepSpecificationImpl<I> :
         queryConfig.queryConfiguration()
     }
 
-    override fun metrics(metricsConfiguration: MongoDbSaveMetricsConfiguration.() -> Unit) {
-        metrics.metricsConfiguration()
+    override fun monitoring(monitoringConfig: StepMonitoringConfiguration.() -> Unit) {
+        this.monitoringConfig.monitoringConfig()
     }
 }
 
@@ -77,20 +78,6 @@ data class MongoDbSaveQueryConfiguration<I>(
     internal var database: suspend (ctx: StepContext<*, *>, input: I) -> String = { _, _ -> "" },
     internal var collection: suspend (ctx: StepContext<*, *>, input: I) -> String = { _, _ -> "" },
     internal var records: suspend (ctx: StepContext<*, *>, input: I) -> List<Document> = { _, _ -> listOf() }
-)
-
-/**
- * Configuration of the metrics to record for the MongoDB [save] step.
- *
- * @property events when true, records the events of the step, defaults to false.
- * @property meters when true, records the meters of the step, defaults to false.
- *
- * @author Alexander Sosnovsky
- */
-@Spec
-data class MongoDbSaveMetricsConfiguration(
-    var events: Boolean = false,
-    var meters: Boolean = false
 )
 
 /**

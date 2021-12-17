@@ -5,25 +5,34 @@ import assertk.assertThat
 import assertk.assertions.hasSize
 import assertk.assertions.index
 import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotNull
 import assertk.assertions.key
 import com.mongodb.reactivestreams.client.MongoClient
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Tags
+import io.micrometer.core.instrument.Timer
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.verify
 import io.qalipsis.api.context.StepContext
+import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
+import io.qalipsis.plugins.mondodb.MongoDbQueryMeters
 import io.qalipsis.plugins.mondodb.MongoDbRecord
 import io.qalipsis.plugins.mondodb.Sorting
 import io.qalipsis.plugins.mondodb.search.MongoDbQueryClientImpl
-import io.qalipsis.plugins.mondodb.search.MongoDbQueryMeterRegistry
 import io.qalipsis.plugins.mongodb.configuration.AbstractMongoDbIntegrationTest
+import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
 import org.bson.BsonTimestamp
 import org.bson.Document
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
 /**
  *
@@ -32,9 +41,13 @@ import org.junit.jupiter.api.Timeout
 @WithMockk
 internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest() {
 
-    @RelaxedMockK
-    private lateinit var queryMeterRegistry: MongoDbQueryMeterRegistry
     private val eventsLogger = relaxedMockk<EventsLogger>()
+
+    private val timeToResponse = relaxedMockk<Timer>()
+
+    private val recordsCount = relaxedMockk<Counter>()
+
+    private val successCounter = relaxedMockk<Counter>()
 
     @RelaxedMockK
     private lateinit var context: StepContext<Any, Pair<Any, List<MongoDbRecord>>>
@@ -43,18 +56,29 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
     @Timeout(50)
     fun `should succeed when sending query with multiple results`() = testDispatcherProvider.run {
         populateMongoFromCsv("input/all_documents.csv")
-
         val clientFactory: () -> MongoClient = relaxedMockk()
         every { clientFactory.invoke() } returns client
+
+        val metersTags = relaxedMockk<Tags>()
+        val tags: Map<String, String> = emptyMap()
+
+        val meterRegistry = relaxedMockk<MeterRegistry> {
+            every { counter("mongodb-search-received-records", refEq(metersTags)) } returns recordsCount
+            every { counter("mongodb-search-success", refEq(metersTags)) } returns successCounter
+            every { timer("mongodb-search-time-to-response", refEq(metersTags)) } returns timeToResponse
+        }
+        val startStopContext = relaxedMockk<StepStartStopContext> {
+            every { toMetersTags() } returns metersTags
+        }
 
         val searchClient = MongoDbQueryClientImpl(
             ioCoroutineScope = this,
             clientFactory = clientFactory,
-            mongoDbMeterRegistry = queryMeterRegistry,
+            meterRegistry = meterRegistry,
             eventsLogger = eventsLogger
         )
 
-        searchClient.init()
+        searchClient.start(startStopContext)
 
         val results = searchClient.execute(
             "db", "col", Document("time", BsonTimestamp(1603197368000)),
@@ -80,14 +104,22 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
                 key("time").isEqualTo(BsonTimestamp(1603197368000))
             }
         }
-
-        verify {
-            queryMeterRegistry.recordTimeToResponse(more(0L))
-            queryMeterRegistry.countRecords(eq(3))
-            queryMeterRegistry.countSuccess()
+        assertThat(results.meters).isInstanceOf(MongoDbQueryMeters::class.java).all {
+            prop("fetchedRecords").isEqualTo(3)
+            prop("timeToResult").isNotNull()
         }
 
-        confirmVerified(queryMeterRegistry)
+        verify {
+            timeToResponse.record(more(0L), TimeUnit.NANOSECONDS)
+            recordsCount.increment(3.0)
+            successCounter.increment()
+
+            eventsLogger.debug("mongodb.search.searching", any(), any(), tags = tags)
+            eventsLogger.info("mongodb.search.time-to-response", any(), any(), tags = tags)
+            eventsLogger.info("mongodb.search.success", any(), any(), tags = tags)
+        }
+
+        confirmVerified(timeToResponse, recordsCount, successCounter, eventsLogger)
     }
 
     @Test
@@ -97,14 +129,26 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
         val clientFactory: () -> MongoClient = relaxedMockk()
         every { clientFactory.invoke() } returns client
 
+        val metersTags = relaxedMockk<Tags>()
+        val tags: Map<String, String> = emptyMap()
+
+        val meterRegistry = relaxedMockk<MeterRegistry> {
+            every { counter("mongodb-search-received-records", refEq(metersTags)) } returns recordsCount
+            every { counter("mongodb-search-success", refEq(metersTags)) } returns successCounter
+            every { timer("mongodb-search-time-to-response", refEq(metersTags)) } returns timeToResponse
+        }
+        val startStopContext = relaxedMockk<StepStartStopContext> {
+            every { toMetersTags() } returns metersTags
+        }
+
         val searchClient = MongoDbQueryClientImpl(
             ioCoroutineScope = this,
             clientFactory = clientFactory,
-            mongoDbMeterRegistry = queryMeterRegistry,
+            meterRegistry = meterRegistry,
             eventsLogger = eventsLogger
         )
 
-        searchClient.init()
+        searchClient.start(startStopContext)
 
         val results = searchClient.execute(
             "db", "col",
@@ -120,13 +164,17 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
                 key("time").isEqualTo(BsonTimestamp(1603197368000))
             }
         }
-        verify {
-            queryMeterRegistry.recordTimeToResponse(more(0L))
-            queryMeterRegistry.countRecords(eq(1))
-            queryMeterRegistry.countSuccess()
 
+        verify {
+            timeToResponse.record(more(0L), TimeUnit.NANOSECONDS)
+            recordsCount.increment(1.0)
+            successCounter.increment()
+
+            eventsLogger.debug("mongodb.search.searching", any(), any(), tags = tags)
+            eventsLogger.info("mongodb.search.time-to-response", any(), any(), tags = tags)
+            eventsLogger.info("mongodb.search.success", any(), any(), tags = tags)
         }
 
-        confirmVerified(queryMeterRegistry)
+        confirmVerified(timeToResponse, recordsCount, successCounter, eventsLogger)
     }
 }

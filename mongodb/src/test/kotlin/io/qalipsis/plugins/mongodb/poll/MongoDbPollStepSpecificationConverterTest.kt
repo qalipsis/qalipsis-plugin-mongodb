@@ -6,7 +6,6 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
-import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import io.aerisconsulting.catadioptre.getProperty
@@ -26,7 +25,6 @@ import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollBatchConverter
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollSingleConverter
 import io.qalipsis.plugins.mondodb.poll.MongoDbIterativeReader
 import io.qalipsis.plugins.mondodb.poll.MongoDbPollStepSpecificationConverter
-import io.qalipsis.plugins.mondodb.search.MongoDbQueryMeterRegistry
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
@@ -79,19 +77,18 @@ internal class MongoDbPollStepSpecificationConverterTest :
                 sort = linkedMapOf("device" to Sorting.ASC, "event" to Sorting.ASC)
                 tieBreaker = "device"
             }
-            metrics {
+            monitoring {
                 meters = true
+                events = true
             }
             pollDelay(10_000L)
             broadcast(123, Duration.ofSeconds(20))
         }
         val creationContext = StepCreationContextImpl(scenarioSpecification, directedAcyclicGraph, spec)
         val spiedConverter = spyk(converter, recordPrivateCalls = true)
-        val meterRegistry = relaxedMockk<MongoDbQueryMeterRegistry>()
 
         val recordsConverter: DatasourceObjectConverter<MongoDBQueryResult, out Any> = relaxedMockk()
         every { spiedConverter["buildConverter"](refEq(spec)) } returns recordsConverter
-        every { spiedConverter["buildMetrics"](eq("my-step")) } returns meterRegistry
 
         // when
         spiedConverter.convert<Unit, Map<String, *>>(
@@ -106,8 +103,8 @@ internal class MongoDbPollStepSpecificationConverterTest :
                 prop("converter").isNotNull().isSameAs(recordsConverter)
                 prop("reader").isNotNull().isInstanceOf(MongoDbIterativeReader::class).all {
                     prop("clientBuilder").isSameAs(mockedClientBuilder)
-                    prop("eventsLogger").isNull()
-                    prop("mongoDbPollMeterRegistry").isSameAs(meterRegistry)
+                    prop("meterRegistry").isNotNull().isEqualTo(meterRegistry)
+                    prop("eventsLogger").isNotNull().isEqualTo(eventsLogger)
                 }
             }
         }
@@ -164,5 +161,4 @@ internal class MongoDbPollStepSpecificationConverterTest :
         }
     }
 
-    // TODO Test the builder method for the meter registry.
 }
