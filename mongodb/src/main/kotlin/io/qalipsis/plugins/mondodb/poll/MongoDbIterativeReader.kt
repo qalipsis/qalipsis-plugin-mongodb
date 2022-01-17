@@ -114,12 +114,12 @@ internal class MongoDbIterativeReader(
         }
         running = false
         runCatching {
-            client.close()
-        }
-        runCatching {
             runBlocking {
                 pollingJob.cancelAndJoin()
             }
+        }
+        runCatching {
+            client.close()
         }
         resultsChannel.cancel()
         pollStatement.reset()
