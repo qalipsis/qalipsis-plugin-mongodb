@@ -68,6 +68,8 @@ dependencies {
     testImplementation("io.micronaut:micronaut-runtime")
     testImplementation("io.aeris-consulting:catadioptre-kotlin:${catadioptreVersion}")
     testRuntimeOnly("io.qalipsis:runtime:${project.version}")
+    testRuntimeOnly("io.qalipsis:head:${project.version}")
+    testRuntimeOnly("io.qalipsis:factory:${project.version}")
 
     kaptTest(platform("io.micronaut:micronaut-bom:$micronautVersion"))
     kaptTest("io.micronaut:micronaut-inject-java")

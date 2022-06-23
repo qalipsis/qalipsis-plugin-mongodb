@@ -12,10 +12,11 @@ import io.qalipsis.plugins.mondodb.mongodb
 import io.qalipsis.plugins.mondodb.save.MongoDbSaveQueryConfiguration
 import io.qalipsis.plugins.mondodb.save.MongoDbSaveStepSpecificationImpl
 import io.qalipsis.plugins.mondodb.save.save
+import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.relaxedMockk
-import kotlinx.coroutines.test.runBlockingTest
 import org.bson.Document
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 
 /**
@@ -23,6 +24,10 @@ import org.junit.jupiter.api.Test
  * @author Alexander Sosnovsky
  */
 internal class MongoDbSaveStepSpecificationImplTest {
+
+    @JvmField
+    @RegisterExtension
+    val testDispatcherProvider = TestDispatcherProvider()
 
     private val databaseName: (suspend (ctx: StepContext<*, *>, input: Any?) -> String) = { _, _ -> "db" }
 
@@ -37,7 +42,7 @@ internal class MongoDbSaveStepSpecificationImplTest {
     }
 
     @Test
-    fun `should add minimal configuration for the step`() = runBlockingTest {
+    fun `should add minimal configuration for the step`() = testDispatcherProvider.runTest {
         val previousStep = DummyStepSpecification()
         previousStep.mongodb().save {
             name = "my-save-step"
@@ -77,7 +82,7 @@ internal class MongoDbSaveStepSpecificationImplTest {
 
 
     @Test
-    fun `should add a complete configuration for the step`() = runBlockingTest {
+    fun `should add a complete configuration for the step`() = testDispatcherProvider.runTest {
         val previousStep = DummyStepSpecification()
         previousStep.mongodb().save {
             name = "my-save-step"

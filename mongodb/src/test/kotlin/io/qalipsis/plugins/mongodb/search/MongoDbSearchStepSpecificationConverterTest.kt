@@ -29,14 +29,15 @@ import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentSearchSingleConvert
 import io.qalipsis.plugins.mondodb.search.MongoDbSearchStep
 import io.qalipsis.plugins.mondodb.search.MongoDbSearchStepSpecificationConverter
 import io.qalipsis.test.assertk.prop
+import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
 import io.qalipsis.test.mockk.verifyOnce
 import io.qalipsis.test.steps.AbstractStepSpecificationConverterTest
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
 import org.bson.Document
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  *
@@ -45,6 +46,10 @@ import org.junit.jupiter.api.Test
 @WithMockk
 internal class MongoDbSearchStepSpecificationConverterTest :
     AbstractStepSpecificationConverterTest<MongoDbSearchStepSpecificationConverter>() {
+
+    @JvmField
+    @RegisterExtension
+    val testDispatcherProvider = TestDispatcherProvider()
 
     private val databaseName: (suspend (ctx: StepContext<*, *>, input: Any?) -> String) = { _, _ -> "db" }
 
@@ -75,7 +80,7 @@ internal class MongoDbSearchStepSpecificationConverterTest :
     }
 
     @Test
-    fun `should convert with name and retry policy`() = runBlockingTest {
+    fun `should convert with name and retry policy`() = testDispatcherProvider.runTest {
         // given
         val spec = MongoDbSearchStepSpecificationImpl<Any>()
         spec.also {
@@ -106,7 +111,7 @@ internal class MongoDbSearchStepSpecificationConverterTest :
         // then
         creationContext.createdStep!!.let { it ->
             assertThat(it).isInstanceOf(MongoDbSearchStep::class).all {
-                prop("id").isNotNull().isEqualTo("mongodb-search-step")
+                prop("name").isNotNull().isEqualTo("mongodb-search-step")
                 prop("mongoDbQueryClient").all {
                     prop("ioCoroutineScope").isSameAs(ioCoroutineScope)
                     prop("clientFactory").isNotNull().isSameAs(clientFactory)
@@ -125,7 +130,7 @@ internal class MongoDbSearchStepSpecificationConverterTest :
     }
 
     @Test
-    fun `should convert without name and retry policy`() = runBlockingTest {
+    fun `should convert without name and retry policy`() = testDispatcherProvider.runTest {
         // given
         val spec = MongoDbSearchStepSpecificationImpl<Any>()
         spec.also {
@@ -154,7 +159,7 @@ internal class MongoDbSearchStepSpecificationConverterTest :
         // then
         creationContext.createdStep!!.let {
             assertThat(it).isInstanceOf(MongoDbSearchStep::class).all {
-                prop("id").isNotNull()
+                prop("name").isNotNull()
                 prop("retryPolicy").isNull()
                 prop("databaseName").isEqualTo(databaseName)
                 prop("collectionName").isEqualTo(collectionName)

@@ -85,20 +85,21 @@ internal class MongoDbIterativeReader(
         }
         this.context = context
         init()
+        running = true
         pollingJob = coroutineScope.launch {
             log.debug { "Polling job just started for context $context" }
             try {
                 while (running) {
                     poll(client)
-                    if (running)
+                    if (running) {
                         delay(pollDelay.toMillis())
+                    }
                 }
                 log.debug { "Polling job just completed for context $context" }
             } finally {
                 resultsChannel.cancel()
             }
         }
-        running = true
     }
 
     override fun stop(context: StepStartStopContext) {

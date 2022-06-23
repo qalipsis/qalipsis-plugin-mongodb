@@ -1,7 +1,7 @@
 package io.qalipsis.plugins.mondodb.save
 
 import io.qalipsis.api.context.StepContext
-import io.qalipsis.api.context.StepId
+import io.qalipsis.api.context.StepName
 import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.retry.RetryPolicy
 import io.qalipsis.api.steps.AbstractStep
@@ -19,7 +19,7 @@ import org.bson.Document
  * @author Alexander Sosnovsky
  */
 internal class MongoDbSaveStep<I>(
-    id: StepId,
+    id: StepName,
     retryPolicy: RetryPolicy?,
     private val mongoDbSaveQueryClient: MongoDbSaveQueryClient,
     private val databaseName: (suspend (ctx: StepContext<*, *>, input: I) -> String),

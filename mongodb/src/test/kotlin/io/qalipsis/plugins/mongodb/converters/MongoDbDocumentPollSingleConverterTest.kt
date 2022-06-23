@@ -12,12 +12,13 @@ import io.qalipsis.plugins.mondodb.MongoDBQueryResult
 import io.qalipsis.plugins.mondodb.MongoDbQueryMeters
 import io.qalipsis.plugins.mondodb.MongoDbRecord
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollSingleConverter
+import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.relaxedMockk
-import kotlinx.coroutines.test.runBlockingTest
 import org.bson.Document
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicLong
 
@@ -27,11 +28,15 @@ import java.util.concurrent.atomic.AtomicLong
  */
 internal class MongoDbDocumentPollSingleConverterTest {
 
+    @JvmField
+    @RegisterExtension
+    val testDispatcherProvider = TestDispatcherProvider()
+
     private val converter = MongoDbDocumentPollSingleConverter("db", "col")
 
     @Test
     @Timeout(5)
-    internal fun `should deserialize and count the records`() = runBlockingTest {
+    internal fun `should deserialize and count the records`() = testDispatcherProvider.runTest {
         //given
         val document1 = Document("_id", ObjectId()).append("status", true).append("name", "name1")
         val document2 = Document("_id", ObjectId()).append("status", false).append("name", "name2")

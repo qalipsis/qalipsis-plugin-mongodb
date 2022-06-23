@@ -15,7 +15,6 @@ import io.qalipsis.plugins.mondodb.poll.MongoDbPollStatement
 import io.qalipsis.plugins.mongodb.configuration.AbstractMongoDbIntegrationTest
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
-import kotlinx.coroutines.runBlocking
 import org.bson.BsonTimestamp
 import org.bson.Document
 import org.junit.jupiter.api.AfterEach
@@ -39,7 +38,7 @@ internal class MongoDbIterativeReaderIntegrationTest : AbstractMongoDbIntegratio
 
     @Test
     @Timeout(20)
-    fun `should sort correctly by device and event`() = runBlocking {
+    fun `should sort correctly by device and event`() = testDispatcherProvider.run {
         populateMongoFromCsv("input/all_documents.csv")
 
         val client: (() -> com.mongodb.reactivestreams.client.MongoClient) =
@@ -96,7 +95,7 @@ internal class MongoDbIterativeReaderIntegrationTest : AbstractMongoDbIntegratio
 
     @Test
     @Timeout(10)
-    fun `should search by findClause`() = runBlocking {
+    fun `should search by findClause`() = testDispatcherProvider.run {
 
         populateMongoFromCsv("input/all_documents.csv")
 

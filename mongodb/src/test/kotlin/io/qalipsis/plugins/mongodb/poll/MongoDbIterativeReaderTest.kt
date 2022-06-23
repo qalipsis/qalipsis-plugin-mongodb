@@ -21,19 +21,23 @@ import io.qalipsis.api.sync.SuspendedCountLatch
 import io.qalipsis.plugins.mondodb.MongoDBQueryResult
 import io.qalipsis.plugins.mondodb.poll.MongoDbIterativeReader
 import io.qalipsis.plugins.mondodb.poll.MongoDbPollStatement
+import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.bson.Document
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.Duration
 
 @WithMockk
 internal class MongoDbIterativeReaderTest {
+
+    @JvmField
+    @RegisterExtension
+    val testDispatcherProvider = TestDispatcherProvider()
 
     @RelaxedMockK
     private lateinit var client: MongoClient
@@ -57,7 +61,7 @@ internal class MongoDbIterativeReaderTest {
 
     @Test
     @Timeout(25)
-    internal fun `should be restartable`() = runBlocking {
+    internal fun `should be restartable`() = testDispatcherProvider.run {
         // given
         val latch = SuspendedCountLatch(1, true)
         val reader = spyk(
@@ -112,7 +116,7 @@ internal class MongoDbIterativeReaderTest {
 
     @Test
     @Timeout(10)
-    fun `should be empty before start`() = runBlockingTest {
+    fun `should be empty before start`() = testDispatcherProvider.runTest {
         // given
         val reader = MongoDbIterativeReader(
             clientBuilder = clientBuilder,
@@ -131,7 +135,7 @@ internal class MongoDbIterativeReaderTest {
 
     @Test
     @Timeout(20)
-    fun `should poll at least twice after start`() = runBlocking {
+    fun `should poll at least twice after start`() = testDispatcherProvider.run {
         // given
         val reader = spyk(
             MongoDbIterativeReader(
