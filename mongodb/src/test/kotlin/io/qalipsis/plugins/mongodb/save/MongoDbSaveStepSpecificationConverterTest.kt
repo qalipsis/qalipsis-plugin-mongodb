@@ -19,12 +19,13 @@ import io.qalipsis.api.steps.StepCreationContextImpl
 import io.qalipsis.plugins.mondodb.save.MongoDbSaveStepSpecificationConverter
 import io.qalipsis.plugins.mondodb.save.MongoDbSaveStepSpecificationImpl
 import io.qalipsis.test.assertk.prop
+import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
 import io.qalipsis.test.steps.AbstractStepSpecificationConverterTest
-import kotlinx.coroutines.test.runBlockingTest
 import org.bson.Document
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  *
@@ -33,6 +34,10 @@ import org.junit.jupiter.api.Test
 @WithMockk
 internal class MongoDbSaveStepSpecificationConverterTest :
     AbstractStepSpecificationConverterTest<MongoDbSaveStepSpecificationConverter>() {
+
+    @JvmField
+    @RegisterExtension
+    val testDispatcherProvider = TestDispatcherProvider()
 
     private val databaseName: (suspend (ctx: StepContext<*, *>, input: Any?) -> String) = { _, _ -> "db" }
 
@@ -64,7 +69,7 @@ internal class MongoDbSaveStepSpecificationConverterTest :
     }
 
     @Test
-    fun `should convert with name, retry policy and meters`() = runBlockingTest {
+    fun `should convert with name, retry policy and meters`() = testDispatcherProvider.runTest {
         // given
         val spec = MongoDbSaveStepSpecificationImpl<Any>()
         spec.also {
@@ -90,7 +95,7 @@ internal class MongoDbSaveStepSpecificationConverterTest :
 
         // then
         assertThat(creationContext.createdStep!!).all {
-            prop("id").isNotNull().isEqualTo("mongodb-save-step")
+            prop("name").isNotNull().isEqualTo("mongodb-save-step")
             prop("mongoDbSaveQueryClient").all {
                 prop("clientBuilder").isNotNull().isSameAs(clientBuilder)
                 prop("meterRegistry").isNotNull().isSameAs(meterRegistry)
@@ -104,7 +109,7 @@ internal class MongoDbSaveStepSpecificationConverterTest :
     }
 
     @Test
-    fun `should convert without name and retry policy but with events`() = runBlockingTest {
+    fun `should convert without name and retry policy but with events`() = testDispatcherProvider.runTest {
         // given
         val spec = MongoDbSaveStepSpecificationImpl<Any>()
         spec.also {

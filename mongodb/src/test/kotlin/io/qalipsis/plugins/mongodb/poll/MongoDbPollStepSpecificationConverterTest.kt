@@ -26,16 +26,17 @@ import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollSingleConverter
 import io.qalipsis.plugins.mondodb.poll.MongoDbIterativeReader
 import io.qalipsis.plugins.mondodb.poll.MongoDbPollStepSpecificationConverter
 import io.qalipsis.test.assertk.prop
+import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
 import io.qalipsis.test.mockk.verifyOnce
 import io.qalipsis.test.steps.AbstractStepSpecificationConverterTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.test.runBlockingTest
 import org.bson.Document
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.Duration
 
 /**
@@ -45,6 +46,10 @@ import java.time.Duration
 @WithMockk
 internal class MongoDbPollStepSpecificationConverterTest :
     AbstractStepSpecificationConverterTest<MongoDbPollStepSpecificationConverter>() {
+
+    @JvmField
+    @RegisterExtension
+    val testDispatcherProvider = TestDispatcherProvider()
 
     @RelaxedMockK
     private lateinit var mockedClientBuilder: () -> com.mongodb.reactivestreams.client.MongoClient
@@ -64,7 +69,7 @@ internal class MongoDbPollStepSpecificationConverterTest :
     @Test
     @ExperimentalCoroutinesApi
     @Timeout(5)
-    fun `should convert with name and metrics`() = runBlockingTest {
+    fun `should convert with name and metrics`() = testDispatcherProvider.runTest {
         // given
         val spec = MongoDbPollStepSpecificationImpl()
         spec.apply {
@@ -98,7 +103,7 @@ internal class MongoDbPollStepSpecificationConverterTest :
         // then
         creationContext.createdStep!!.let {
             assertThat(it).isInstanceOf(IterativeDatasourceStep::class).all {
-                prop("id").isEqualTo("my-step")
+                prop("name").isEqualTo("my-step")
                 prop("processor").isNotNull().isInstanceOf(NoopDatasourceObjectProcessor::class)
                 prop("converter").isNotNull().isSameAs(recordsConverter)
                 prop("reader").isNotNull().isInstanceOf(MongoDbIterativeReader::class).all {

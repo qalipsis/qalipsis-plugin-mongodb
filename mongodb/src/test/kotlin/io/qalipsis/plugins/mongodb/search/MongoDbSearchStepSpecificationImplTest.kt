@@ -9,10 +9,11 @@ import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.DummyStepSpecification
 import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.plugins.mondodb.*
+import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.relaxedMockk
-import kotlinx.coroutines.runBlocking
 import org.bson.Document
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 
 /**
@@ -21,8 +22,12 @@ import org.junit.jupiter.api.Test
  */
 internal class MongoDbSearchStepSpecificationImplTest {
 
+    @JvmField
+    @RegisterExtension
+    val testDispatcherProvider = TestDispatcherProvider()
+
     @Test
-    fun `should add minimal configuration for the step`() = runBlocking {
+    fun `should add minimal configuration for the step`() = testDispatcherProvider.run {
         val previousStep = DummyStepSpecification()
         previousStep.mongodb().search {
             name = "my-search-step"
@@ -77,7 +82,7 @@ internal class MongoDbSearchStepSpecificationImplTest {
 
 
     @Test
-    fun `should add a complete configuration for the step`() = runBlocking {
+    fun `should add a complete configuration for the step`() = testDispatcherProvider.run {
         val previousStep = DummyStepSpecification()
         previousStep.mongodb().search {
             name = "my-search-step"

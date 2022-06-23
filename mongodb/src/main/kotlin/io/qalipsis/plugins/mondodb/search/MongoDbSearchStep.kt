@@ -1,7 +1,7 @@
 package io.qalipsis.plugins.mondodb.search
 
 import io.qalipsis.api.context.StepContext
-import io.qalipsis.api.context.StepId
+import io.qalipsis.api.context.StepName
 import io.qalipsis.api.context.StepOutput
 import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.retry.RetryPolicy
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong
  * @author Alexander Sosnovsky
  */
 internal class MongoDbSearchStep<I>(
-    id: StepId,
+    id: StepName,
     retryPolicy: RetryPolicy?,
     private val mongoDbQueryClient: MongoDbQueryClient,
     private val databaseName: (suspend (ctx: StepContext<*, *>, input: I) -> String),
