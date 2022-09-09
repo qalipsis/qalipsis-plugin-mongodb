@@ -13,7 +13,7 @@ import io.qalipsis.api.steps.map
 import io.qalipsis.api.steps.onEach
 import io.qalipsis.plugins.mondodb.Sorting
 import io.qalipsis.plugins.mondodb.mongodb
-import io.qalipsis.plugins.mondodb.poll
+import io.qalipsis.plugins.mondodb.poll.poll
 import org.bson.BsonTimestamp
 import org.bson.Document
 import java.time.Duration
@@ -76,7 +76,8 @@ object PollScenario {
                             tieBreaker = "timestamp"
                         }
                         pollDelay(Duration.ofSeconds(1))
-                    }.flatten()
+                    }
+                        .flatten()
                         .logErrors()
                         .map {
                             log.trace { "Right record: $it" }
@@ -93,8 +94,12 @@ object PollScenario {
                 inAction["username"] to Duration.ofSeconds(epochSecondOut - epochSecondIn)
             }
             .map { "The user ${it.first} stayed ${it.second.toMinutes()} minute(s) in the building" }
-            .onEach { receivedMessages.add(it) }
-            .onEach { println(it) }
+            .onEach {
+                receivedMessages.add(it)
+            }
+            .onEach {
+                println(it)
+            }
     }
 
 }

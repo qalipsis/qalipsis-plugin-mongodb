@@ -12,7 +12,6 @@ import io.qalipsis.api.steps.datasource.DatasourceObjectConverter
 import io.qalipsis.api.steps.datasource.IterativeDatasourceStep
 import io.qalipsis.api.steps.datasource.processors.NoopDatasourceObjectProcessor
 import io.qalipsis.plugins.mondodb.MongoDBQueryResult
-import io.qalipsis.plugins.mondodb.MongoDbPollStepSpecificationImpl
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollBatchConverter
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollSingleConverter
 import jakarta.inject.Named

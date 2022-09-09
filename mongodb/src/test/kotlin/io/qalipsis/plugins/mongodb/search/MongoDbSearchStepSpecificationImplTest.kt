@@ -9,6 +9,9 @@ import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.DummyStepSpecification
 import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.plugins.mondodb.*
+import io.qalipsis.plugins.mondodb.search.MongoDbQueryConfiguration
+import io.qalipsis.plugins.mondodb.search.MongoDbSearchStepSpecificationImpl
+import io.qalipsis.plugins.mondodb.search.search
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.relaxedMockk
 import org.bson.Document
@@ -55,7 +58,6 @@ internal class MongoDbSearchStepSpecificationImplTest {
                 prop(StepMonitoringConfiguration::events).isFalse()
                 prop(StepMonitoringConfiguration::meters).isFalse()
             }
-            prop(MongoDbSearchStepSpecificationImpl<*>::flattenOutput).isFalse()
         }
 
         val step: MongoDbSearchStepSpecificationImpl<*> =
@@ -100,8 +102,7 @@ internal class MongoDbSearchStepSpecificationImplTest {
                 events = true
                 meters = true
             }
-
-        }.flatten()
+        }
 
         assertThat(previousStep.nextSteps[0]).isInstanceOf(MongoDbSearchStepSpecificationImpl::class).all {
             prop("name") { MongoDbSearchStepSpecificationImpl<*>::name.call(it) }.isEqualTo("my-search-step")
@@ -116,7 +117,6 @@ internal class MongoDbSearchStepSpecificationImplTest {
                 prop(StepMonitoringConfiguration::events).isTrue()
                 prop(StepMonitoringConfiguration::meters).isTrue()
             }
-            prop(MongoDbSearchStepSpecificationImpl<*>::flattenOutput).isTrue()
         }
 
         val step: MongoDbSearchStepSpecificationImpl<*> =
