@@ -4,6 +4,7 @@ import com.mongodb.reactivestreams.client.MongoClients
 import io.qalipsis.api.annotations.Spec
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.AbstractStepSpecification
+import io.qalipsis.api.steps.ConfigurableStepSpecification
 import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.api.steps.StepSpecification
 import io.qalipsis.plugins.mondodb.MongoDbStepSpecification
@@ -16,6 +17,7 @@ import org.bson.Document
  */
 interface MongoDbSaveStepSpecification<I> :
     StepSpecification<I, I, MongoDbSaveStepSpecification<I>>,
+    ConfigurableStepSpecification<I, I, MongoDbSaveStepSpecification<I>>,
     MongoDbStepSpecification<I, I, MongoDbSaveStepSpecification<I>> {
 
     /**

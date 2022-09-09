@@ -1,11 +1,14 @@
-package io.qalipsis.plugins.mondodb
+package io.qalipsis.plugins.mondodb.search
 
 import com.mongodb.reactivestreams.client.MongoClients
 import io.qalipsis.api.annotations.Spec
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.AbstractStepSpecification
+import io.qalipsis.api.steps.ConfigurableStepSpecification
 import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.api.steps.StepSpecification
+import io.qalipsis.plugins.mondodb.MongoDbStepSpecification
+import io.qalipsis.plugins.mondodb.Sorting
 import org.bson.Document
 
 /**
@@ -14,8 +17,9 @@ import org.bson.Document
  * @author Alexander Sosnovsky
  */
 interface MongoDbSearchStepSpecification<I> :
-    StepSpecification<I, Pair<I, List<MongoDbRecord>>, MongoDbSearchStepSpecification<I>>,
-    MongoDbStepSpecification<I, Pair<I, List<MongoDbRecord>>, MongoDbSearchStepSpecification<I>> {
+    StepSpecification<I, MongoDBSearchResult<I>, MongoDbSearchStepSpecification<I>>,
+    ConfigurableStepSpecification<I, MongoDBSearchResult<I>, MongoDbSearchStepSpecification<I>>,
+    MongoDbStepSpecification<I, MongoDBSearchResult<I>, MongoDbSearchStepSpecification<I>> {
 
     /**
      * Configures the connection to the MongoDb server.
@@ -26,11 +30,6 @@ interface MongoDbSearchStepSpecification<I> :
      * Defines the statement to execute when searching. The query must contain ordering clauses.
      */
     fun search(searchConfiguration: MongoDbQueryConfiguration<I>.() -> Unit)
-
-    /**
-     * Returns each record of a batch individually to the next steps.
-     */
-    fun flatten(): StepSpecification<I, MongoDbRecord, *>
 
     /**
      * Configures the monitoring of the search step.
@@ -46,7 +45,7 @@ interface MongoDbSearchStepSpecification<I> :
 @Spec
 internal class MongoDbSearchStepSpecificationImpl<I> :
     MongoDbSearchStepSpecification<I>,
-    AbstractStepSpecification<I, Pair<I, List<MongoDbRecord>>, MongoDbSearchStepSpecification<I>>() {
+    AbstractStepSpecification<I, MongoDBSearchResult<I>, MongoDbSearchStepSpecification<I>>() {
 
     internal var clientFactory: (() -> com.mongodb.reactivestreams.client.MongoClient) = { MongoClients.create() }
 
@@ -54,21 +53,12 @@ internal class MongoDbSearchStepSpecificationImpl<I> :
 
     internal var monitoringConfig = StepMonitoringConfiguration()
 
-    internal var flattenOutput = false
-
     override fun connect(clientFactory: () -> com.mongodb.reactivestreams.client.MongoClient) {
         this.clientFactory = clientFactory
     }
 
     override fun search(searchConfiguration: MongoDbQueryConfiguration<I>.() -> Unit) {
         searchConfig.searchConfiguration()
-    }
-
-    override fun flatten(): StepSpecification<I, MongoDbRecord, *> {
-        flattenOutput = true
-
-        @Suppress("UNCHECKED_CAST")
-        return this as StepSpecification<I, MongoDbRecord, *>
     }
 
     override fun monitoring(monitoringConfig: StepMonitoringConfiguration.() -> Unit) {
@@ -91,7 +81,7 @@ data class MongoDbQueryConfiguration<I>(
 )
 
 /**
- * Searches data in MongoDB using a io.qalipsis.plugins.mondodb.search query.
+ * Searches data in MongoDB using a io.qalipsis.plugins.mondodb.search.search query.
  *
  * @author Alexander Sosnovsky
  */

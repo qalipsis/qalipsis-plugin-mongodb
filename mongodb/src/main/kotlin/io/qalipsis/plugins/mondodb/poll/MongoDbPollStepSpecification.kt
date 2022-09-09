@@ -1,17 +1,21 @@
-package io.qalipsis.plugins.mondodb
+package io.qalipsis.plugins.mondodb.poll
 
 import com.mongodb.reactivestreams.client.MongoClients
 import io.qalipsis.api.annotations.Spec
 import io.qalipsis.api.scenario.StepSpecificationRegistry
 import io.qalipsis.api.steps.AbstractStepSpecification
 import io.qalipsis.api.steps.BroadcastSpecification
+import io.qalipsis.api.steps.ConfigurableStepSpecification
 import io.qalipsis.api.steps.LoopableSpecification
 import io.qalipsis.api.steps.SingletonConfiguration
 import io.qalipsis.api.steps.SingletonType
 import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.api.steps.StepSpecification
 import io.qalipsis.api.steps.UnicastSpecification
-import io.qalipsis.plugins.mondodb.poll.MongoDBPollResults
+import io.qalipsis.plugins.mondodb.MongoDbRecord
+import io.qalipsis.plugins.mondodb.MongoDbScenarioSpecification
+import io.qalipsis.plugins.mondodb.MongoDbStepSpecification
+import io.qalipsis.plugins.mondodb.Sorting
 import org.bson.Document
 import java.time.Duration
 import javax.validation.constraints.NotBlank
@@ -24,9 +28,9 @@ import javax.validation.constraints.NotNull
  * @author Alexander Sosnovsky
  */
 interface MongoDbPollStepSpecification :
-    StepSpecification<Unit, MongoDBPollResults, Flattenable<MongoDbRecord, MongoDBPollResults>>,
-    MongoDbStepSpecification<Unit, MongoDBPollResults, Flattenable<MongoDbRecord, MongoDBPollResults>>,
-    Flattenable<MongoDbRecord, MongoDBPollResults>,
+    StepSpecification<Unit, MongoDBPollResults, MongoDbPollStepSpecification>,
+    MongoDbStepSpecification<Unit, MongoDBPollResults, MongoDbPollStepSpecification>,
+    ConfigurableStepSpecification<Unit, MongoDBPollResults, MongoDbPollStepSpecification>,
     LoopableSpecification, UnicastSpecification, BroadcastSpecification {
 
     /**
@@ -54,6 +58,11 @@ interface MongoDbPollStepSpecification :
      * Configures the monitoring of the poll step.
      */
     fun monitoring(monitoringConfig: StepMonitoringConfiguration.() -> Unit)
+
+    /**
+     * Returns the documents individually.
+     */
+    fun flatten(): StepSpecification<Unit, MongoDbRecord, *>
 }
 
 /**
@@ -62,9 +71,8 @@ interface MongoDbPollStepSpecification :
  * @author Alexander Sosnovsky
  */
 @Spec
-class MongoDbPollStepSpecificationImpl :
-    AbstractStepSpecification<Unit, MongoDBPollResults, Flattenable<MongoDbRecord, MongoDBPollResults>>(),
-    Flattenable<MongoDbRecord, MongoDBPollResults>,
+internal class MongoDbPollStepSpecificationImpl :
+    AbstractStepSpecification<Unit, MongoDBPollResults, MongoDbPollStepSpecification>(),
     MongoDbPollStepSpecification {
 
     override val singletonConfiguration: SingletonConfiguration = SingletonConfiguration(SingletonType.UNICAST)
@@ -131,14 +139,13 @@ data class MongoDbSearchConfiguration(
     @field:NotBlank var tieBreaker: String = "",
 )
 
-
 /**
  * Creates a Poll step in order to periodically fetch data from a MongoDb database.
  *
  * @author Alexander Sosnovsky
  */
 fun MongoDbScenarioSpecification.poll(
-    configurationBlock: MongoDbPollStepSpecificationImpl.() -> Unit
+    configurationBlock: MongoDbPollStepSpecification.() -> Unit
 ): MongoDbPollStepSpecification {
     val step = MongoDbPollStepSpecificationImpl()
     step.configurationBlock()

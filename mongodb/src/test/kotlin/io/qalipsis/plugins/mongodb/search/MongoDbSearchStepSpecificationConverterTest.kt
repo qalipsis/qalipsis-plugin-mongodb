@@ -12,27 +12,19 @@ import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import com.mongodb.reactivestreams.client.MongoClient
-import io.aerisconsulting.catadioptre.invokeInvisible
-import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
-import io.mockk.spyk
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.StepCreationContext
 import io.qalipsis.api.steps.StepCreationContextImpl
-import io.qalipsis.plugins.mondodb.MongoDBQueryResult
-import io.qalipsis.plugins.mondodb.MongoDbQueryConfiguration
-import io.qalipsis.plugins.mondodb.MongoDbSearchStepSpecificationImpl
 import io.qalipsis.plugins.mondodb.Sorting
-import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentConverter
-import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentSearchBatchConverter
-import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentSearchSingleConverter
+import io.qalipsis.plugins.mondodb.search.MongoDbQueryConfiguration
 import io.qalipsis.plugins.mondodb.search.MongoDbSearchStep
 import io.qalipsis.plugins.mondodb.search.MongoDbSearchStepSpecificationConverter
+import io.qalipsis.plugins.mondodb.search.MongoDbSearchStepSpecificationImpl
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
-import io.qalipsis.test.mockk.verifyOnce
 import io.qalipsis.test.steps.AbstractStepSpecificationConverterTest
 import kotlinx.coroutines.CoroutineScope
 import org.bson.Document
@@ -98,13 +90,9 @@ internal class MongoDbSearchStepSpecificationConverterTest :
             }
         }
         val creationContext = StepCreationContextImpl(scenarioSpecification, directedAcyclicGraph, spec)
-        val spiedConverter = spyk(converter, recordPrivateCalls = true)
-
-        val recordsConverter: MongoDbDocumentConverter<MongoDBQueryResult, out Any, *> = relaxedMockk()
-        every { spiedConverter["buildConverter"](refEq(spec)) } returns recordsConverter
 
         // when
-        spiedConverter.convert<Unit, Map<String, *>>(
+        converter.convert<Unit, Map<String, *>>(
             creationContext as StepCreationContext<MongoDbSearchStepSpecificationImpl<*>>
         )
 
@@ -123,10 +111,8 @@ internal class MongoDbSearchStepSpecificationConverterTest :
                 prop("collectionName").isEqualTo(collectionName)
                 prop("filter").isEqualTo(filter)
                 prop("sorting").isEqualTo(sorting)
-                prop("converter").isNotNull().isSameAs(recordsConverter)
             }
         }
-        verifyOnce { spiedConverter["buildConverter"](refEq(spec)) }
     }
 
     @Test
@@ -146,13 +132,9 @@ internal class MongoDbSearchStepSpecificationConverterTest :
             }
         }
         val creationContext = StepCreationContextImpl(scenarioSpecification, directedAcyclicGraph, spec)
-        val spiedConverter = spyk(converter, recordPrivateCalls = true)
-
-        val recordsConverter: MongoDbDocumentConverter<MongoDBQueryResult, out Any, *> = relaxedMockk()
-        every { spiedConverter["buildConverter"](refEq(spec)) } returns recordsConverter
 
         // when
-        spiedConverter.convert<Unit, Map<String, *>>(
+        converter.convert<Unit, Map<String, *>>(
             creationContext as StepCreationContext<MongoDbSearchStepSpecificationImpl<*>>
         )
 
@@ -165,7 +147,6 @@ internal class MongoDbSearchStepSpecificationConverterTest :
                 prop("collectionName").isEqualTo(collectionName)
                 prop("filter").isEqualTo(filter)
                 prop("sorting").isEqualTo(sorting)
-                prop("converter").isNotNull().isSameAs(recordsConverter)
                 prop("mongoDbQueryClient").all {
                     prop("ioCoroutineScope").isSameAs(ioCoroutineScope)
                     prop("clientFactory").isNotNull().isSameAs(clientFactory)
@@ -174,31 +155,6 @@ internal class MongoDbSearchStepSpecificationConverterTest :
                 }
             }
         }
-        verifyOnce { spiedConverter["buildConverter"](refEq(spec)) }
     }
 
-    @Test
-    fun `should build batch converter`() {
-        // given
-        val spec = MongoDbSearchStepSpecificationImpl<Any>()
-
-        // when
-        val converter = converter.invokeInvisible<MongoDbDocumentConverter<MongoDBQueryResult, *, *>>("buildConverter", spec)
-
-        // then
-        assertThat(converter).isInstanceOf(MongoDbDocumentSearchBatchConverter::class)
-    }
-
-    @Test
-    fun `should build single converter`() {
-        // given
-        val spec = MongoDbSearchStepSpecificationImpl<Any>()
-        spec.flatten()
-
-        // when
-        val converter = converter.invokeInvisible<MongoDbDocumentConverter<MongoDBQueryResult, *, *>>("buildConverter", spec)
-
-        // then
-        assertThat(converter).isInstanceOf(MongoDbDocumentSearchSingleConverter::class)
-    }
 }

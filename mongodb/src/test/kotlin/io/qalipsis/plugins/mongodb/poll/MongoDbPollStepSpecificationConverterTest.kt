@@ -19,12 +19,12 @@ import io.qalipsis.api.steps.datasource.DatasourceObjectConverter
 import io.qalipsis.api.steps.datasource.IterativeDatasourceStep
 import io.qalipsis.api.steps.datasource.processors.NoopDatasourceObjectProcessor
 import io.qalipsis.plugins.mondodb.MongoDBQueryResult
-import io.qalipsis.plugins.mondodb.MongoDbPollStepSpecificationImpl
 import io.qalipsis.plugins.mondodb.Sorting
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollBatchConverter
 import io.qalipsis.plugins.mondodb.converters.MongoDbDocumentPollSingleConverter
 import io.qalipsis.plugins.mondodb.poll.MongoDbIterativeReader
 import io.qalipsis.plugins.mondodb.poll.MongoDbPollStepSpecificationConverter
+import io.qalipsis.plugins.mondodb.poll.MongoDbPollStepSpecificationImpl
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
@@ -137,7 +137,8 @@ internal class MongoDbPollStepSpecificationConverterTest :
         spec.flattenOutput = false
 
         // when
-        val converter = converter.invokeInvisible<DatasourceObjectConverter<MongoDBQueryResult, out Any>>("buildConverter", spec)
+        val converter =
+            converter.invokeInvisible<DatasourceObjectConverter<MongoDBQueryResult, out Any>>("buildConverter", spec)
 
         // then
         assertThat(converter).isInstanceOf(MongoDbDocumentPollBatchConverter::class).all {
@@ -157,7 +158,8 @@ internal class MongoDbPollStepSpecificationConverterTest :
         spec.flattenOutput = true
 
         // when
-        val converter = converter.invokeInvisible<DatasourceObjectConverter<MongoDBQueryResult, out Any>>("buildConverter", spec)
+        val converter =
+            converter.invokeInvisible<DatasourceObjectConverter<MongoDBQueryResult, out Any>>("buildConverter", spec)
 
         // then
         assertThat(converter).isInstanceOf(MongoDbDocumentPollSingleConverter::class).all {
