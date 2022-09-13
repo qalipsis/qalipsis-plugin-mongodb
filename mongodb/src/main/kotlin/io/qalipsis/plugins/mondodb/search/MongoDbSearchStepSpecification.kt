@@ -73,12 +73,40 @@ internal class MongoDbSearchStepSpecificationImpl<I> :
  * @property sort closure to generate a map for the ordering clause
  */
 @Spec
-data class MongoDbQueryConfiguration<I>(
+data class MongoDbQueryConfiguration<I> internal constructor(
     internal var database: suspend (ctx: StepContext<*, *>, input: I) -> String = { _, _ -> "" },
     internal var collection: suspend (ctx: StepContext<*, *>, input: I) -> String = { _, _ -> "" },
     internal var query: suspend (ctx: StepContext<*, *>, input: I) -> Document = { _, _ -> Document() },
     internal var sort: suspend (ctx: StepContext<*, *>, input: I) -> LinkedHashMap<String, Sorting> = { _, _ -> linkedMapOf() }
-)
+) {
+    /**
+     * Build the name of the database to save the data in.
+     */
+    fun database(databaseFactory: suspend (ctx: StepContext<*, *>, input: I) -> String) {
+        database = databaseFactory
+    }
+
+    /**
+     * Build the name of the collection to save the data in.
+     */
+    fun collection(collectionFactory: suspend (ctx: StepContext<*, *>, input: I) -> String) {
+        collection = collectionFactory
+    }
+
+    /**
+     * Build the query to execute.
+     */
+    fun query(queryFactory: suspend (ctx: StepContext<*, *>, input: I) -> Document) {
+        query = queryFactory
+    }
+
+    /**
+     * Build the ordering strategy of the query to execute.
+     */
+    fun sort(sortFactory: suspend (ctx: StepContext<*, *>, input: I) -> LinkedHashMap<String, Sorting>) {
+        sort = sortFactory
+    }
+}
 
 /**
  * Searches data in MongoDB using a io.qalipsis.plugins.mondodb.search.search query.

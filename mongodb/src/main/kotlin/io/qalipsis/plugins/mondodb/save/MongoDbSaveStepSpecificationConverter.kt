@@ -46,7 +46,7 @@ internal class MongoDbSaveStepSpecificationConverter(
             ),
             databaseName = spec.queryConfig.database as suspend (ctx: StepContext<*, *>, input: Any?) -> String,
             collectionName = spec.queryConfig.collection as suspend (ctx: StepContext<*, *>, input: Any?) -> String,
-            recordsFactory = spec.queryConfig.records as suspend (ctx: StepContext<*, *>, input: I) -> List<Document>,
+            recordsFactory = spec.queryConfig.documents as suspend (ctx: StepContext<*, *>, input: I) -> List<Document>,
         )
         creationContext.createdStep(step)
     }

@@ -131,7 +131,7 @@ internal object DefaultValues {
  * from the database having a [tieBreaker] greater (or less if sorted descending) than the last polled value will be fetched at next poll.
  */
 @Spec
-data class MongoDbSearchConfiguration(
+data class MongoDbSearchConfiguration internal constructor(
     @field:NotBlank var database: String = "",
     @field:NotBlank var collection: String = "",
     @field:NotNull var query: Document = Document(),

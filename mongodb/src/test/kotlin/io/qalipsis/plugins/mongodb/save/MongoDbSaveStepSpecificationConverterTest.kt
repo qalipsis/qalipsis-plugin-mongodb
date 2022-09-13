@@ -78,7 +78,7 @@ internal class MongoDbSaveStepSpecificationConverterTest :
             it.query {
                 database = databaseName
                 collection = collectionName
-                records = recordSupplier
+                documents = recordSupplier
             }
             it.retryPolicy = mockedRetryPolicy
             it.monitoring {
@@ -116,7 +116,7 @@ internal class MongoDbSaveStepSpecificationConverterTest :
             it.query {
                 database = databaseName
                 collection = collectionName
-                records = recordSupplier
+                documents = recordSupplier
             }
             it.clientBuilder = clientBuilder
             it.monitoring {

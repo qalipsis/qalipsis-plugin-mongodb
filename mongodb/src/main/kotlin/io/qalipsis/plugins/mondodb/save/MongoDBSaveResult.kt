@@ -1,5 +1,7 @@
 package io.qalipsis.plugins.mondodb.save
 
+import io.micronaut.core.annotation.Introspected
+
 /**
  * Wrapper for the result of save records procedure in MongoDB.
  *
@@ -8,7 +10,8 @@ package io.qalipsis.plugins.mondodb.save
  *
  * @author Carlos Vieira
  */
-internal class MongoDBSaveResult<I>(
+@Introspected
+class MongoDBSaveResult<I>(
     val input: I,
     val meters: MongoDbSaveQueryMeters
 )

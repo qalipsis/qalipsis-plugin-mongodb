@@ -52,7 +52,7 @@ internal class MongoDbSaveStepSpecificationImplTest {
             query {
                 database = databaseName
                 collection = collectionName
-                records = recordSupplier
+                documents = recordSupplier
             }
 
         }
@@ -61,7 +61,7 @@ internal class MongoDbSaveStepSpecificationImplTest {
             prop("name") { MongoDbSaveStepSpecificationImpl<*>::name.call(it) }.isEqualTo("my-save-step")
             prop(MongoDbSaveStepSpecificationImpl<*>::clientBuilder).isNotNull()
             prop(MongoDbSaveStepSpecificationImpl<*>::queryConfig).all {
-                prop(MongoDbSaveQueryConfiguration<*>::records).isEqualTo(recordSupplier)
+                prop(MongoDbSaveQueryConfiguration<*>::documents).isEqualTo(recordSupplier)
             }
             prop(MongoDbSaveStepSpecificationImpl<*>::monitoringConfig).isNotNull().all {
                 prop(StepMonitoringConfiguration::events).isFalse()
@@ -92,7 +92,7 @@ internal class MongoDbSaveStepSpecificationImplTest {
             query {
                 database = databaseName
                 collection = collectionName
-                records = recordSupplier
+                documents = recordSupplier
             }
             monitoring {
                 events = true
@@ -104,7 +104,7 @@ internal class MongoDbSaveStepSpecificationImplTest {
             prop("name") { MongoDbSaveStepSpecificationImpl<*>::name.call(it) }.isEqualTo("my-save-step")
             prop(MongoDbSaveStepSpecificationImpl<*>::clientBuilder).isNotNull()
             prop(MongoDbSaveStepSpecificationImpl<*>::queryConfig).all {
-                prop(MongoDbSaveQueryConfiguration<*>::records).isEqualTo(recordSupplier)
+                prop(MongoDbSaveQueryConfiguration<*>::documents).isEqualTo(recordSupplier)
             }
             prop(MongoDbSaveStepSpecificationImpl<*>::monitoringConfig).all {
                 prop(StepMonitoringConfiguration::events).isTrue()

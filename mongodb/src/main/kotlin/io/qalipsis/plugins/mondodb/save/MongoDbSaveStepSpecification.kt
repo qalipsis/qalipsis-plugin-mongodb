@@ -16,9 +16,9 @@ import org.bson.Document
  * @author Alexander Sosnovsky
  */
 interface MongoDbSaveStepSpecification<I> :
-    StepSpecification<I, I, MongoDbSaveStepSpecification<I>>,
-    ConfigurableStepSpecification<I, I, MongoDbSaveStepSpecification<I>>,
-    MongoDbStepSpecification<I, I, MongoDbSaveStepSpecification<I>> {
+    StepSpecification<I, MongoDBSaveResult<I>, MongoDbSaveStepSpecification<I>>,
+    ConfigurableStepSpecification<I, MongoDBSaveResult<I>, MongoDbSaveStepSpecification<I>>,
+    MongoDbStepSpecification<I, MongoDBSaveResult<I>, MongoDbSaveStepSpecification<I>> {
 
     /**
      * Configures the connection to the MongoDb server.
@@ -45,7 +45,7 @@ interface MongoDbSaveStepSpecification<I> :
 @Spec
 internal class MongoDbSaveStepSpecificationImpl<I> :
     MongoDbSaveStepSpecification<I>,
-    AbstractStepSpecification<I, I, MongoDbSaveStepSpecification<I>>() {
+    AbstractStepSpecification<I, MongoDBSaveResult<I>, MongoDbSaveStepSpecification<I>>() {
 
     internal var clientBuilder: (() -> com.mongodb.reactivestreams.client.MongoClient) = { MongoClients.create() }
 
@@ -71,16 +71,37 @@ internal class MongoDbSaveStepSpecificationImpl<I> :
  *
  * @property database closure to generate the string for the database name
  * @property collection closure to generate the string for the collection name
- * @property records closure to generate a list of [Document]
+ * @property documents closure to generate a list of [Document]
  *
  * @author Alexander Sosnovsky
  */
 @Spec
-data class MongoDbSaveQueryConfiguration<I>(
+data class MongoDbSaveQueryConfiguration<I> internal constructor(
     internal var database: suspend (ctx: StepContext<*, *>, input: I) -> String = { _, _ -> "" },
     internal var collection: suspend (ctx: StepContext<*, *>, input: I) -> String = { _, _ -> "" },
-    internal var records: suspend (ctx: StepContext<*, *>, input: I) -> List<Document> = { _, _ -> listOf() }
-)
+    internal var documents: suspend (ctx: StepContext<*, *>, input: I) -> List<Document> = { _, _ -> emptyList<Document>() }
+) {
+    /**
+     * Build the name of the database to save the data in.
+     */
+    fun database(databaseFactory: suspend (ctx: StepContext<*, *>, input: I) -> String) {
+        database = databaseFactory
+    }
+
+    /**
+     * Build the name of the collection to save the data in.
+     */
+    fun collection(collectionFactory: suspend (ctx: StepContext<*, *>, input: I) -> String) {
+        collection = collectionFactory
+    }
+
+    /**
+     * Build the documents to save.
+     */
+    fun documents(documentsFactory: suspend (ctx: StepContext<*, *>, input: I) -> List<Document>) {
+        documents = documentsFactory
+    }
+}
 
 /**
  * Saves documents into MongoD.
