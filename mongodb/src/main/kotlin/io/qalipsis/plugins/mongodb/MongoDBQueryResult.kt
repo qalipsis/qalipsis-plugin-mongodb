@@ -14,9 +14,19 @@
  * permissions and limitations under the License.
  */
 
-rootProject.name = "qalipsis-plugins-mongodb"
+package io.qalipsis.plugins.mongodb
 
-include(
-    "mongodb"
+import org.bson.Document
+
+/**
+ * A wrapper for meters and documents.
+ *
+ * @property documents result of search query procedure in MongoDB
+ * @property meters meters of the query
+ *
+ * @author Carlos Vieira
+ */
+class MongoDBQueryResult(
+    val documents: List<Document>,
+    val meters: MongoDbQueryMeters
 )
-

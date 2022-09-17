@@ -14,9 +14,14 @@
  * permissions and limitations under the License.
  */
 
-rootProject.name = "qalipsis-plugins-mongodb"
+package io.qalipsis.plugins.mongodb
 
-include(
-    "mongodb"
-)
-
+/**
+ *  Sorting order for MongoDB filters to sort fetched documents.
+ *
+ *  @author Alexander Sosnovsky
+ */
+enum class Sorting {
+    ASC,
+    DESC,
+}

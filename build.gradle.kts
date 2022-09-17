@@ -1,18 +1,35 @@
+/*
+ * Copyright 2022 AERIS IT Solutions GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_ERROR
 
 plugins {
     idea
     java
-    kotlin("jvm") version "1.5.31"
-    kotlin("kapt") version "1.5.31"
-    kotlin("plugin.allopen") version "1.5.31"
+    kotlin("jvm") version "1.6.21"
+    kotlin("kapt") version "1.6.21"
+    kotlin("plugin.allopen") version "1.6.21"
 
     id("nebula.contacts") version "5.1.0"
     id("nebula.info") version "9.1.1"
-    id("nebula.maven-publish") version "17.0.0"
-    id("nebula.maven-scm") version "17.0.0"
-    id("nebula.maven-manifest") version "17.0.0"
+    id("nebula.maven-publish") version "17.3.3"
+    id("nebula.maven-scm") version "17.3.3"
+    id("nebula.maven-manifest") version "17.3.3"
+    id("nebula.maven-apache-license") version "17.3.3"
     signing
 }
 
@@ -22,7 +39,7 @@ plugins {
 val target = JavaVersion.VERSION_11
 
 configure<JavaPluginConvention> {
-    description = "Qalipsis - Plugins"
+    description = "QALIPSIS plugin for MongoDB"
 
     sourceCompatibility = target
     targetCompatibility = target
@@ -36,7 +53,7 @@ tasks.withType<Wrapper> {
 val testNumCpuCore: String? by project
 
 allprojects {
-    group = "io.qalipsis"
+    group = "io.qalipsis.plugin"
     version = File(rootDir, "project.version").readText().trim()
 
     apply(plugin = "java")
@@ -46,6 +63,7 @@ allprojects {
     apply(plugin = "nebula.maven-scm")
     apply(plugin = "nebula.maven-manifest")
     apply(plugin = "nebula.maven-developer")
+    apply(plugin = "nebula.maven-apache-license")
     apply(plugin = "nebula.javadoc-jar")
     apply(plugin = "nebula.source-jar")
     apply(plugin = "signing")
@@ -89,7 +107,7 @@ allprojects {
     publishing {
         publications {
             filterIsInstance<MavenPublication>().forEach {
-                it.artifactId = "plugin-${project.name}"
+                it.artifactId = project.name
             }
         }
         repositories {
@@ -114,14 +132,13 @@ allprojects {
 
         withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
             kotlinOptions {
-                kotlinOptions.useIR =
-                    true // Enables the new (not yet default) Kotlin backend to accelerate compilation.
                 jvmTarget = target.majorVersion
                 javaParameters = true
                 freeCompilerArgs += listOf(
                     "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
                     "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
-                    "-Xallow-result-return-type"
+                    "-Xallow-result-return-type",
+                    "-Xemit-jvm-type-annotations"
                 )
             }
         }
@@ -134,7 +151,7 @@ allprojects {
         val integrationTest = register<Test>("integrationTest") {
             this.group = "verification"
             ignoreFailures = System.getProperty("ignoreIntegrationTestFailures", "false").toBoolean()
-            include("**/*IntegrationTest.*", "**/*IntegrationTest$*")
+            include("**/*IntegrationTest*", "**/*IntegrationTest$*", "**/*IntegrationTest.**")
             exclude("**/*Scenario*.*")
         }
 

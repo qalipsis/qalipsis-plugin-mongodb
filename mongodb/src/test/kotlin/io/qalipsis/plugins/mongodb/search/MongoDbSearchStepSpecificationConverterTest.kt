@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 AERIS IT Solutions GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
 @file:Suppress("UNCHECKED_CAST")
 
 package io.qalipsis.plugins.mongodb.search
@@ -16,11 +32,11 @@ import io.mockk.impl.annotations.RelaxedMockK
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.StepCreationContext
 import io.qalipsis.api.steps.StepCreationContextImpl
-import io.qalipsis.plugins.mondodb.Sorting
-import io.qalipsis.plugins.mondodb.search.MongoDbQueryConfiguration
-import io.qalipsis.plugins.mondodb.search.MongoDbSearchStep
-import io.qalipsis.plugins.mondodb.search.MongoDbSearchStepSpecificationConverter
-import io.qalipsis.plugins.mondodb.search.MongoDbSearchStepSpecificationImpl
+import io.qalipsis.plugins.mongodb.Sorting
+import io.qalipsis.plugins.mongodb.search.MongoDbQueryConfiguration
+import io.qalipsis.plugins.mongodb.search.MongoDbSearchStep
+import io.qalipsis.plugins.mongodb.search.MongoDbSearchStepSpecificationConverter
+import io.qalipsis.plugins.mongodb.search.MongoDbSearchStepSpecificationImpl
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk

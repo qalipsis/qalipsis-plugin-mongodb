@@ -14,9 +14,20 @@
  * permissions and limitations under the License.
  */
 
-rootProject.name = "qalipsis-plugins-mongodb"
+package io.qalipsis.plugins.mongodb.save
 
-include(
-    "mongodb"
+import io.micronaut.core.annotation.Introspected
+
+/**
+ * Wrapper for the result of save records procedure in MongoDB.
+ *
+ * @property input the data to save in MongoDb
+ * @property meters meters of the save step
+ *
+ * @author Carlos Vieira
+ */
+@Introspected
+class MongoDBSaveResult<I>(
+    val input: I,
+    val meters: MongoDbSaveQueryMeters
 )
-

@@ -14,9 +14,26 @@
  * permissions and limitations under the License.
  */
 
-rootProject.name = "qalipsis-plugins-mongodb"
+package io.qalipsis.plugins.mongodb.poll
 
-include(
-    "mongodb"
-)
+import io.qalipsis.plugins.mongodb.MongoDbQueryMeters
+import io.qalipsis.plugins.mongodb.MongoDbRecord
 
+/**
+ * Wrapper for the result of poll in MongoDB.
+ *
+ *
+ * @property records list of MongoDB records.
+ * @property meters of the poll step.
+ *
+ * @author Carlos Vieira
+ */
+class MongoDBPollResults(
+    val records: List<MongoDbRecord>,
+    val meters: MongoDbQueryMeters
+) : Iterable<MongoDbRecord> {
+
+    override fun iterator(): Iterator<MongoDbRecord> {
+        return records.iterator()
+    }
+}
