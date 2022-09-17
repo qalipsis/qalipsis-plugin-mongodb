@@ -1,10 +1,26 @@
+/*
+ * Copyright 2022 AERIS IT Solutions GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
 package io.qalipsis.plugins.mongodb.poll
 
 import com.mongodb.reactivestreams.client.MongoClients
 import io.qalipsis.api.annotations.Scenario
+import io.qalipsis.api.executionprofile.regular
 import io.qalipsis.api.lang.concurrentList
 import io.qalipsis.api.logging.LoggerHelper.logger
-import io.qalipsis.api.rampup.regular
 import io.qalipsis.api.scenario.scenario
 import io.qalipsis.api.steps.filterNotNull
 import io.qalipsis.api.steps.innerJoin
@@ -42,7 +58,7 @@ object PollScenario {
     fun pollData() {
         scenario("mongodb-poll") {
             minionsCount = minions
-            rampUp {
+            profile {
                 // Starts all at once.
                 regular(100, minionsCount)
             }
