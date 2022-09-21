@@ -26,6 +26,7 @@ import assertk.assertions.isTrue
 import assertk.assertions.prop
 import com.mongodb.reactivestreams.client.MongoClients
 import io.qalipsis.api.scenario.StepSpecificationRegistry
+import io.qalipsis.api.scenario.TestScenarioFactory
 import io.qalipsis.api.scenario.scenario
 import io.qalipsis.api.steps.SingletonConfiguration
 import io.qalipsis.api.steps.SingletonType
@@ -44,7 +45,7 @@ internal class MongoDbSpecificationImplTest {
 
     @Test
     internal fun `should add minimal specification to the scenario with default values`() {
-        val scenario = scenario("my-scenario") as StepSpecificationRegistry
+        val scenario = TestScenarioFactory.scenario("my-scenario") as StepSpecificationRegistry
         scenario.mongodb().poll {
             name = "my-step"
             search {
@@ -89,7 +90,7 @@ internal class MongoDbSpecificationImplTest {
     internal fun `should add a complete specification to the scenario as broadcast`() {
         val clientBuilder: () -> com.mongodb.reactivestreams.client.MongoClient =
             { MongoClients.create("mongodb://localhost:27017/?streamType=netty") }
-        val scenario = scenario("my-scenario") as StepSpecificationRegistry
+        val scenario = TestScenarioFactory.scenario("my-scenario") as StepSpecificationRegistry
         scenario.mongodb().poll {
             name = "my-step"
             connect(clientBuilder)

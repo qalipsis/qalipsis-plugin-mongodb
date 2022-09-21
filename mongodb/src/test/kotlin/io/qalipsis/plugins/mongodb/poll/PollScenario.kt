@@ -54,9 +54,9 @@ object PollScenario {
     @JvmStatic
     private val log = logger()
 
-    @Scenario
+    @Scenario("mongodb-poll")
     fun pollData() {
-        scenario("mongodb-poll") {
+        scenario {
             minionsCount = minions
             profile {
                 // Starts all at once.
