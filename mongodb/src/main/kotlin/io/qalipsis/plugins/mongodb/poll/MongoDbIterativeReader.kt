@@ -19,11 +19,11 @@ package io.qalipsis.plugins.mongodb.poll
 import com.mongodb.reactivestreams.client.MongoClient
 import io.aerisconsulting.catadioptre.KTestable
 import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.logging.LoggerHelper.logger
+import io.qalipsis.api.meters.CampaignMeterRegistry
 import io.qalipsis.api.steps.datasource.DatasourceIterativeReader
 import io.qalipsis.api.sync.Latch
 import io.qalipsis.plugins.mongodb.MongoDBQueryResult
@@ -63,7 +63,7 @@ internal class MongoDbIterativeReader(
     private val pollDelay: Duration,
     private val resultsChannelFactory: () -> Channel<MongoDBQueryResult> = { Channel(Channel.UNLIMITED) },
     private val eventsLogger: EventsLogger?,
-    private val meterRegistry: MeterRegistry?
+    private val meterRegistry: CampaignMeterRegistry?
 ) : DatasourceIterativeReader<MongoDBQueryResult> {
 
     private val eventPrefix = "mongodb.poll"

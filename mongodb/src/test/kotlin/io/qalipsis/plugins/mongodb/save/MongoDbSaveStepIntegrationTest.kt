@@ -27,7 +27,6 @@ import assertk.assertions.key
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.reactivestreams.client.MongoClients
 import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import io.mockk.confirmVerified
@@ -35,14 +34,16 @@ import io.mockk.every
 import io.mockk.verify
 import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
+import io.qalipsis.api.meters.CampaignMeterRegistry
 import io.qalipsis.api.sync.SuspendedCountLatch
-import io.qalipsis.plugins.mongodb.save.MongoDbSaveQueryClientImpl
-import io.qalipsis.plugins.mongodb.save.MongoDbSaveQueryMeters
 import io.qalipsis.plugins.mongodb.Constants.DOCKER_IMAGE
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
+import java.time.Duration
+import java.util.concurrent.TimeUnit
+import kotlin.math.pow
 import org.bson.Document
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -56,9 +57,6 @@ import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
-import java.time.Duration
-import java.util.concurrent.TimeUnit
-import kotlin.math.pow
 
 /**
  *
@@ -94,7 +92,7 @@ internal class MongoDbSaveStepIntegrationTest {
     @Timeout(10)
     fun `should succeed when sending query with single results`() = testDispatcherProvider.run {
         val metersTags = relaxedMockk<Tags>()
-        val meterRegistry = relaxedMockk<MeterRegistry> {
+        val meterRegistry = relaxedMockk<CampaignMeterRegistry> {
             every { counter("mongodb-save-saving-records", refEq(metersTags)) } returns recordsCount
             every { timer("mongodb-save-time-to-response", refEq(metersTags)) } returns timeToResponse
         }
@@ -145,7 +143,7 @@ internal class MongoDbSaveStepIntegrationTest {
     @Timeout(10)
     fun `should throw an exception when sending invalid documents`(): Unit = testDispatcherProvider.run {
         val metersTags = relaxedMockk<Tags>()
-        val meterRegistry = relaxedMockk<MeterRegistry> {
+        val meterRegistry = relaxedMockk<CampaignMeterRegistry> {
             every { counter("mongodb-save-failures", refEq(metersTags)) } returns failureCounter
         }
         val startStopContext = relaxedMockk<StepStartStopContext> {

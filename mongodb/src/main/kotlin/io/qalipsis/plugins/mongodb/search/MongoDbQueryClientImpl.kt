@@ -18,12 +18,12 @@ package io.qalipsis.plugins.mongodb.search
 
 import com.mongodb.reactivestreams.client.MongoClient
 import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.lang.tryAndLog
 import io.qalipsis.api.logging.LoggerHelper.logger
+import io.qalipsis.api.meters.CampaignMeterRegistry
 import io.qalipsis.api.sync.Slot
 import io.qalipsis.plugins.mongodb.Sorting
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +51,7 @@ internal class MongoDbQueryClientImpl(
     private val ioCoroutineScope: CoroutineScope,
     private val clientFactory: () -> MongoClient,
     private var eventsLogger: EventsLogger?,
-    private val meterRegistry: MeterRegistry?
+    private val meterRegistry: CampaignMeterRegistry?
 ) : MongoDbQueryClient {
 
     private lateinit var client: MongoClient

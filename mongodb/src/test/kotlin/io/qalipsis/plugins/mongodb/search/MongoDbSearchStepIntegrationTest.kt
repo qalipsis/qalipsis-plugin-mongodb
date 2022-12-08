@@ -26,7 +26,6 @@ import assertk.assertions.isNotNull
 import assertk.assertions.key
 import com.mongodb.reactivestreams.client.MongoClient
 import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import io.mockk.confirmVerified
@@ -36,6 +35,7 @@ import io.mockk.verify
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
+import io.qalipsis.api.meters.CampaignMeterRegistry
 import io.qalipsis.plugins.mongodb.MongoDbQueryMeters
 import io.qalipsis.plugins.mongodb.MongoDbRecord
 import io.qalipsis.plugins.mongodb.Sorting
@@ -77,7 +77,7 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
         val metersTags = relaxedMockk<Tags>()
         val tags: Map<String, String> = emptyMap()
 
-        val meterRegistry = relaxedMockk<MeterRegistry> {
+        val meterRegistry = relaxedMockk<CampaignMeterRegistry> {
             every { counter("mongodb-search-received-records", refEq(metersTags)) } returns recordsCount
             every { counter("mongodb-search-success", refEq(metersTags)) } returns successCounter
             every { timer("mongodb-search-time-to-response", refEq(metersTags)) } returns timeToResponse
@@ -147,7 +147,7 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
         val metersTags = relaxedMockk<Tags>()
         val tags: Map<String, String> = emptyMap()
 
-        val meterRegistry = relaxedMockk<MeterRegistry> {
+        val meterRegistry = relaxedMockk<CampaignMeterRegistry> {
             every { counter("mongodb-search-received-records", refEq(metersTags)) } returns recordsCount
             every { counter("mongodb-search-success", refEq(metersTags)) } returns successCounter
             every { timer("mongodb-search-time-to-response", refEq(metersTags)) } returns timeToResponse

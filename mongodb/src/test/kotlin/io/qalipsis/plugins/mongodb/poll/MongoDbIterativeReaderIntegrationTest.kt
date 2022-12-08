@@ -26,8 +26,6 @@ import assertk.assertions.key
 import com.mongodb.reactivestreams.client.MongoClients
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.plugins.mongodb.Sorting
-import io.qalipsis.plugins.mongodb.poll.MongoDbIterativeReader
-import io.qalipsis.plugins.mongodb.poll.MongoDbPollStatement
 import io.qalipsis.plugins.mongodb.configuration.AbstractMongoDbIntegrationTest
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk

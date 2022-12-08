@@ -25,7 +25,6 @@ import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import com.mongodb.reactivestreams.client.MongoClient
 import io.aerisconsulting.catadioptre.getProperty
-import io.micrometer.core.instrument.MeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.impl.annotations.RelaxedMockK
@@ -33,10 +32,9 @@ import io.mockk.impl.annotations.SpyK
 import io.mockk.spyk
 import io.mockk.verify
 import io.qalipsis.api.events.EventsLogger
+import io.qalipsis.api.meters.CampaignMeterRegistry
 import io.qalipsis.api.sync.SuspendedCountLatch
 import io.qalipsis.plugins.mongodb.MongoDBQueryResult
-import io.qalipsis.plugins.mongodb.poll.MongoDbIterativeReader
-import io.qalipsis.plugins.mongodb.poll.MongoDbPollStatement
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
@@ -73,7 +71,7 @@ internal class MongoDbIterativeReaderTest {
     private lateinit var eventsLogger: EventsLogger
 
     @RelaxedMockK
-    private lateinit var meterRegistry: MeterRegistry
+    private lateinit var meterRegistry: CampaignMeterRegistry
 
     @Test
     @Timeout(25)
