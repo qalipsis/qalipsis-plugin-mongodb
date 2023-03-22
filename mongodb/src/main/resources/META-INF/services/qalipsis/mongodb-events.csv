@@ -1,0 +1,13 @@
+mongodb.poll.failure;Duration,Throwable
+mongodb.poll.polling;null
+mongodb.poll.success;Duration,Int
+mongodb.poll.successful-response;Duration,Int
+mongodb.save.failed-records;Int
+mongodb.save.failure;Duration,Throwable
+mongodb.save.saved-records;Duration,AtomicInteger
+mongodb.save.saving-records;Int
+mongodb.save.time-to-response;Duration
+mongodb.search.failure;Duration,Throwable
+mongodb.search.searching;null
+mongodb.search.success;Duration,Int
+mongodb.search.time-to-response;Duration

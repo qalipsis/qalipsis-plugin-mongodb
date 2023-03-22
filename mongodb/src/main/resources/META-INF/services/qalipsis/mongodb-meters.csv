@@ -1,0 +1,12 @@
+mongodb-poll-failures;counter
+mongodb-poll-received-records;counter
+mongodb-poll-successes;counter
+mongodb-poll-time-to-response;timer
+mongodb-save-failures;counter
+mongodb-save-saving-records;counter
+mongodb-save-successes;counter
+mongodb-save-time-to-response;timer
+mongodb-search-failure;counter
+mongodb-search-received-records;counter
+mongodb-search-success;counter
+mongodb-search-time-to-response;timer
