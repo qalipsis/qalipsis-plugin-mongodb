@@ -85,11 +85,11 @@
     },
     {
       "moduleLicense": ".*",
-      "moduleName": "io.qalipsis:dev-platform"
+      "moduleName": "io.qalipsis:qalipsis-dev-platform"
     },
     {
       "moduleLicense": ".*",
-      "moduleName": "io.qalipsis:plugin-platform"
+      "moduleName": "io.qalipsis:qalipsis-plugin-platform"
     },
     {
       "moduleLicense": ".*",

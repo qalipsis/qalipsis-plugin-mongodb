@@ -17,6 +17,8 @@
 rootProject.name = "qalipsis-plugins-mongodb"
 
 include(
-    "mongodb"
+    "qalipsis-plugin-mongodb"
 )
+
+project(":qalipsis-plugin-mongodb").projectDir = File(rootDir, "mongodb")
 
