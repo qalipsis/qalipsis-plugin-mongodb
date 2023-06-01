@@ -20,17 +20,17 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_ERROR
 plugins {
     idea
     java
-    kotlin("jvm") version "1.6.21"
-    kotlin("kapt") version "1.6.21"
-    kotlin("plugin.allopen") version "1.6.21"
+    kotlin("jvm") version "1.8.21"
+    kotlin("kapt") version "1.8.21"
+    kotlin("plugin.allopen") version "1.8.21"
 
-    id("nebula.contacts") version "5.1.0"
-    id("nebula.info") version "9.1.1"
-    id("nebula.maven-publish") version "17.3.3"
-    id("nebula.maven-scm") version "17.3.3"
-    id("nebula.maven-manifest") version "17.3.3"
-    id("nebula.maven-apache-license") version "17.3.3"
-    id ("com.github.jk1.dependency-license-report") version "1.17"
+    id("nebula.contacts") version "6.0.0"
+    id("nebula.info") version "11.4.1"
+    id("nebula.maven-publish") version "18.4.0"
+    id("nebula.maven-scm") version "18.4.0"
+    id("nebula.maven-manifest") version "18.4.0"
+    id("nebula.maven-apache-license") version "18.4.0"
+    id("com.github.jk1.dependency-license-report") version "1.17"
     signing
 }
 
@@ -138,9 +138,6 @@ allprojects {
     }
 
     tasks {
-        withType<Jar> {
-            archiveBaseName.set("io-qalipsis-plugin-${project.name}")
-        }
 
         withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
             kotlinOptions {
