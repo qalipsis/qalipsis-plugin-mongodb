@@ -18,13 +18,14 @@ package io.qalipsis.plugins.mongodb.save
 
 import com.mongodb.client.result.InsertManyResult
 import com.mongodb.reactivestreams.client.MongoClient
-import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.Timer
 import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.lang.tryAndLog
 import io.qalipsis.api.logging.LoggerHelper.logger
 import io.qalipsis.api.meters.CampaignMeterRegistry
+import io.qalipsis.api.meters.Counter
+import io.qalipsis.api.meters.Timer
+import io.qalipsis.api.report.ReportMessageSeverity
 import io.qalipsis.api.sync.Slot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -71,11 +72,37 @@ internal class MongoDbSaveQueryClientImpl(
     override suspend fun start(context: StepStartStopContext) {
         client = clientBuilder()
         meterRegistry?.apply {
-            val tags = context.toMetersTags()
-            recordsCounter = counter("$meterPrefix-saving-records", tags)
-            timeToResponse = timer("$meterPrefix-time-to-response", tags)
-            successCounter = counter("$meterPrefix-successes", tags)
-            failureCounter = counter("$meterPrefix-failures", tags)
+            val tags = context.toEventTags()
+            val scenarioName = context.scenarioName
+            val stepName = context.stepName
+            recordsCounter = counter(scenarioName, stepName, "$meterPrefix-saving-records", tags).report {
+                display(
+                    format = "attempted req: %,.0f",
+                    severity = ReportMessageSeverity.INFO,
+                    row = 0,
+                    column = 0,
+                    Counter::count
+                )
+            }
+            timeToResponse = timer(scenarioName, stepName, "$meterPrefix-time-to-response", tags)
+            successCounter = counter(scenarioName, stepName, "$meterPrefix-successes", tags).report {
+                display(
+                    format = "\u2713 %,.0f req",
+                    severity = ReportMessageSeverity.INFO,
+                    row = 0,
+                    column = 2,
+                    Counter::count
+                )
+            }
+            failureCounter = counter(scenarioName, stepName, "$meterPrefix-failures", tags).report {
+                display(
+                    format = "\u2716 %,.0f failures",
+                    severity = ReportMessageSeverity.ERROR,
+                    row = 0,
+                    column = 4,
+                    Counter::count
+                )
+            }
         }
     }
 
@@ -151,10 +178,6 @@ internal class MongoDbSaveQueryClientImpl(
 
     override suspend fun stop(context: StepStartStopContext) {
         meterRegistry?.apply {
-            remove(recordsCounter!!)
-            remove(timeToResponse!!)
-            remove(successCounter!!)
-            remove(failureCounter!!)
             recordsCounter = null
             timeToResponse = null
             successCounter = null

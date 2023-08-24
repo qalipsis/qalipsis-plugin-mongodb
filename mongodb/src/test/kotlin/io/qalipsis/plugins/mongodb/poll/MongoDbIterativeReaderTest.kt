@@ -27,12 +27,15 @@ import com.mongodb.reactivestreams.client.MongoClient
 import io.aerisconsulting.catadioptre.getProperty
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.impl.annotations.SpyK
 import io.mockk.spyk
 import io.mockk.verify
+import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.meters.CampaignMeterRegistry
+import io.qalipsis.api.meters.Counter
 import io.qalipsis.api.sync.SuspendedCountLatch
 import io.qalipsis.plugins.mongodb.MongoDBQueryResult
 import io.qalipsis.test.coroutines.TestDispatcherProvider
@@ -73,11 +76,32 @@ internal class MongoDbIterativeReaderTest {
     @RelaxedMockK
     private lateinit var meterRegistry: CampaignMeterRegistry
 
+    private val recordsCount = relaxedMockk<Counter>()
+
+    private val successCounter = relaxedMockk<Counter>()
+
+    private val failureCounter = relaxedMockk<Counter>()
+
+
     @Test
     @Timeout(25)
     internal fun `should be restartable`() = testDispatcherProvider.run {
         // given
         val latch = SuspendedCountLatch(1, true)
+        val tags: Map<String, String> = emptyMap()
+        val mockMeterRegistry = relaxedMockk<CampaignMeterRegistry> {
+            every { counter("test-scenario", "test-step","mongodb-poll-received-records", refEq(tags)) } returns recordsCount
+            every { recordsCount.report(any()) } returns recordsCount
+            every { counter("test-scenario", "test-step","mongodb-poll-successes", refEq(tags)) } returns successCounter
+            every { successCounter.report(any()) } returns successCounter
+            every { counter("test-scenario", "test-step","mongodb-poll-failures", refEq(tags)) } returns failureCounter
+            every { failureCounter.report(any()) } returns failureCounter
+        }
+        val startStopContext = relaxedMockk<StepStartStopContext> {
+            every { toEventTags() } returns tags
+            every { scenarioName } returns "test-scenario"
+            every { stepName } returns "test-step"
+        }
         val reader = spyk(
             MongoDbIterativeReader(
                 clientBuilder = clientBuilder,
@@ -86,13 +110,13 @@ internal class MongoDbIterativeReaderTest {
                 resultsChannelFactory = resultsChannelFactory,
                 coroutineScope = this,
                 eventsLogger = eventsLogger,
-                meterRegistry = meterRegistry,
+                meterRegistry = mockMeterRegistry,
             ), recordPrivateCalls = true
         )
         coEvery { reader["poll"](refEq(client)) } coAnswers { latch.decrement() }
 
         // when
-        reader.start(relaxedMockk { })
+        reader.start(startStopContext)
 
         // then
         latch.await()
@@ -107,7 +131,7 @@ internal class MongoDbIterativeReaderTest {
         assertThat(resultsChannel).isSameAs(resultsChannel)
 
         // when
-        reader.stop(relaxedMockk())
+        reader.stop(startStopContext)
         verify { client.close() }
         verify { resultsChannel.cancel() }
         verify { pollStatement.reset() }
@@ -116,7 +140,7 @@ internal class MongoDbIterativeReaderTest {
 
         // when
         latch.reset()
-        reader.start(relaxedMockk { })
+        reader.start(startStopContext)
         // then
         verify { reader["init"]() }
         verify { resultsChannelFactory() }
@@ -125,7 +149,7 @@ internal class MongoDbIterativeReaderTest {
         assertThat(reader.getProperty<MongoClient>("client")).isSameAs(client)
         assertThat(reader.getProperty<Channel<List<Document>>>("resultsChannel")).isSameAs(resultsChannel)
 
-        reader.stop(relaxedMockk())
+        reader.stop(startStopContext)
     }
 
     @Test
@@ -151,6 +175,20 @@ internal class MongoDbIterativeReaderTest {
     @Timeout(20)
     fun `should poll at least twice after start`() = testDispatcherProvider.run {
         // given
+        val tags: Map<String, String> = emptyMap()
+        val mockMeterRegistry = relaxedMockk<CampaignMeterRegistry> {
+            every { counter("test-scenario", "test-step","mongodb-poll-received-records", refEq(tags)) } returns recordsCount
+            every { recordsCount.report(any()) } returns recordsCount
+            every { counter("test-scenario", "test-step","mongodb-poll-successes", refEq(tags)) } returns successCounter
+            every { successCounter.report(any()) } returns successCounter
+            every { counter("test-scenario", "test-step","mongodb-poll-failures", refEq(tags)) } returns failureCounter
+            every { failureCounter.report(any()) } returns failureCounter
+        }
+        val startStopContext = relaxedMockk<StepStartStopContext> {
+            every { toEventTags() } returns tags
+            every { scenarioName } returns "test-scenario"
+            every { stepName } returns "test-step"
+        }
         val reader = spyk(
             MongoDbIterativeReader(
                 clientBuilder = clientBuilder,
@@ -159,20 +197,20 @@ internal class MongoDbIterativeReaderTest {
                 resultsChannelFactory = resultsChannelFactory,
                 coroutineScope = this,
                 eventsLogger = eventsLogger,
-                meterRegistry = meterRegistry
+                meterRegistry = mockMeterRegistry
             ), recordPrivateCalls = true
         )
         val countDownLatch = SuspendedCountLatch(2, true)
         coEvery { reader["poll"](any<MongoClient>()) } coAnswers { countDownLatch.decrement() }
 
         // when
-        reader.start(relaxedMockk())
+        reader.start(startStopContext)
         countDownLatch.await()
 
         // then
         coVerify(atLeast = 2) { reader["poll"](any<MongoClient>()) }
         assertThat(reader.hasNext()).isTrue()
 
-        reader.stop(relaxedMockk())
+        reader.stop(startStopContext)
     }
 }

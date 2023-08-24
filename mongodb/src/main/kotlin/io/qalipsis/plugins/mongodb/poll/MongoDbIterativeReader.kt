@@ -18,12 +18,13 @@ package io.qalipsis.plugins.mongodb.poll
 
 import com.mongodb.reactivestreams.client.MongoClient
 import io.aerisconsulting.catadioptre.KTestable
-import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.Timer
 import io.qalipsis.api.context.StepStartStopContext
 import io.qalipsis.api.events.EventsLogger
 import io.qalipsis.api.logging.LoggerHelper.logger
 import io.qalipsis.api.meters.CampaignMeterRegistry
+import io.qalipsis.api.meters.Counter
+import io.qalipsis.api.meters.Timer
+import io.qalipsis.api.report.ReportMessageSeverity
 import io.qalipsis.api.steps.datasource.DatasourceIterativeReader
 import io.qalipsis.api.sync.Latch
 import io.qalipsis.plugins.mongodb.MongoDBQueryResult
@@ -45,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Database reader based upon [MongoDB driver with reactive streams][https://mongodb.github.io/mongo-java-driver/].
  *
- * @property clientFactory supplier for the MongoDb client
+ * @property clientBuilder supplier for the MongoDb client
  * @property pollStatement statement to execute
  * @property pollDelay duration between the end of a poll and the start of the next one
  * @property resultsChannelFactory factory to create the channel containing the received results sets
@@ -93,11 +94,37 @@ internal class MongoDbIterativeReader(
     override fun start(context: StepStartStopContext) {
         log.debug { "Starting the step with the context $context" }
         meterRegistry?.apply {
-            val tags = context.toMetersTags()
-            recordsCount = counter("$meterPrefix-received-records", tags)
-            timeToResponse = timer("$meterPrefix-time-to-response", tags)
-            successCounter = counter("$meterPrefix-successes", tags)
-            failureCounter = counter("$meterPrefix-failures", tags)
+            val tags = context.toEventTags()
+            val scenarioName = context.scenarioName
+            val stepName = context.stepName
+            recordsCount = counter(scenarioName, stepName, "$meterPrefix-received-records", tags).report {
+                display(
+                    format = "attempted req: %,.0f",
+                    severity = ReportMessageSeverity.INFO,
+                    row = 0,
+                    column = 0,
+                    Counter::count
+                )
+            }
+            timeToResponse = timer(scenarioName, stepName,  "$meterPrefix-time-to-response", tags)
+            successCounter = counter(scenarioName, stepName, "$meterPrefix-successes", tags).report {
+                display(
+                    format = "\u2713 %,.0f req",
+                    severity = ReportMessageSeverity.INFO,
+                    row = 1,
+                    column = 0,
+                    Counter::count
+                )
+            }
+            failureCounter = counter(scenarioName, stepName, "$meterPrefix-failures", tags).report {
+                display(
+                    format = "\u2716 %,.0f failures",
+                    severity = ReportMessageSeverity.ERROR,
+                    row = 0,
+                    column = 1,
+                    Counter::count
+                )
+            }
         }
         this.context = context
         init()
@@ -120,10 +147,6 @@ internal class MongoDbIterativeReader(
 
     override fun stop(context: StepStartStopContext) {
         meterRegistry?.apply {
-            remove(recordsCount!!)
-            remove(timeToResponse!!)
-            remove(successCounter!!)
-            remove(failureCounter!!)
             recordsCount = null
             timeToResponse = null
             successCounter = null
