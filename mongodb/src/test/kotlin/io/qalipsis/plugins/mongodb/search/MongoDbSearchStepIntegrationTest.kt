@@ -75,19 +75,47 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
         populateMongoFromCsv("input/all_documents.csv")
         val clientFactory: () -> MongoClient = relaxedMockk()
         every { clientFactory.invoke() } returns client
-        val tags: Map<String, String> = emptyMap()
+        val metersTags: Map<String, String> = emptyMap()
 
         val meterRegistry = relaxedMockk<CampaignMeterRegistry> {
-            every { counter("test-scenario", "test-step","mongodb-search-received-records", refEq(tags)) } returns recordsCount
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-search-received-records",
+                    refEq(metersTags)
+                )
+            } returns recordsCount
             every { recordsCount.report(any()) } returns recordsCount
-            every { counter("test-scenario", "test-step","mongodb-search-success", refEq(tags)) } returns successCounter
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-search-success",
+                    refEq(metersTags)
+                )
+            } returns successCounter
             every { successCounter.report(any()) } returns successCounter
-            every { counter("test-scenario", "test-step","mongodb-search-failure", refEq(tags)) } returns failureCounter
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-search-failure",
+                    refEq(metersTags)
+                )
+            } returns failureCounter
             every { failureCounter.report(any()) } returns failureCounter
-            every { timer("test-scenario", "test-step","mongodb-search-time-to-response", refEq(tags)) } returns timeToResponse
+            every {
+                timer(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-search-time-to-response",
+                    refEq(metersTags)
+                )
+            } returns timeToResponse
         }
         val startStopContext = relaxedMockk<StepStartStopContext> {
-            every { toEventTags() } returns tags
+            every { toMetersTags() } returns metersTags
             every { scenarioName } returns "test-scenario"
             every { stepName } returns "test-step"
         }
@@ -136,9 +164,9 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
             successCounter.increment()
             recordsCount.report(any<Meter.ReportingConfiguration<Counter>.() -> Unit>())
             successCounter.report(any<Meter.ReportingConfiguration<Counter>.() -> Unit>())
-            eventsLogger.debug("mongodb.search.searching", any(), any(), tags = tags)
-            eventsLogger.info("mongodb.search.time-to-response", any(), any(), tags = tags)
-            eventsLogger.info("mongodb.search.success", any(), any(), tags = tags)
+            eventsLogger.debug("mongodb.search.searching", any(), any(), tags = metersTags)
+            eventsLogger.info("mongodb.search.time-to-response", any(), any(), tags = metersTags)
+            eventsLogger.info("mongodb.search.success", any(), any(), tags = metersTags)
         }
 
         confirmVerified(timeToResponse, recordsCount, successCounter, eventsLogger)
@@ -151,19 +179,47 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
         val clientFactory: () -> MongoClient = relaxedMockk()
         every { clientFactory.invoke() } returns client
 
-        val tags: Map<String, String> = emptyMap()
+        val metersTags: Map<String, String> = emptyMap()
 
         val meterRegistry = relaxedMockk<CampaignMeterRegistry> {
-            every { counter("test-scenario", "test-step","mongodb-search-received-records", refEq(tags)) } returns recordsCount
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-search-received-records",
+                    refEq(metersTags)
+                )
+            } returns recordsCount
             every { recordsCount.report(any()) } returns recordsCount
-            every { counter("test-scenario", "test-step", "mongodb-search-success", refEq(tags)) } returns successCounter
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-search-success",
+                    refEq(metersTags)
+                )
+            } returns successCounter
             every { successCounter.report(any()) } returns successCounter
-            every { counter("test-scenario", "test-step","mongodb-search-failure", refEq(tags)) } returns failureCounter
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-search-failure",
+                    refEq(metersTags)
+                )
+            } returns failureCounter
             every { failureCounter.report(any()) } returns failureCounter
-            every { timer("test-scenario", "test-step","mongodb-search-time-to-response", refEq(tags)) } returns timeToResponse
+            every {
+                timer(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-search-time-to-response",
+                    refEq(metersTags)
+                )
+            } returns timeToResponse
         }
         val startStopContext = relaxedMockk<StepStartStopContext> {
-            every { toEventTags() } returns tags
+            every { toMetersTags() } returns metersTags
             every { scenarioName } returns "test-scenario"
             every { stepName } returns "test-step"
         }
@@ -198,9 +254,9 @@ internal class MongoDbSearchStepIntegrationTest : AbstractMongoDbIntegrationTest
             successCounter.increment()
             recordsCount.report(any<Meter.ReportingConfiguration<Counter>.() -> Unit>())
             successCounter.report(any<Meter.ReportingConfiguration<Counter>.() -> Unit>())
-            eventsLogger.debug("mongodb.search.searching", any(), any(), tags = tags)
-            eventsLogger.info("mongodb.search.time-to-response", any(), any(), tags = tags)
-            eventsLogger.info("mongodb.search.success", any(), any(), tags = tags)
+            eventsLogger.debug("mongodb.search.searching", any(), any(), tags = metersTags)
+            eventsLogger.info("mongodb.search.time-to-response", any(), any(), tags = metersTags)
+            eventsLogger.info("mongodb.search.success", any(), any(), tags = metersTags)
         }
 
         confirmVerified(timeToResponse, recordsCount, successCounter, eventsLogger)
