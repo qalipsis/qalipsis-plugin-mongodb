@@ -98,7 +98,7 @@ internal class MongoDbIterativeReaderTest {
             every { failureCounter.report(any()) } returns failureCounter
         }
         val startStopContext = relaxedMockk<StepStartStopContext> {
-            every { toEventTags() } returns tags
+            every { toMetersTags() } returns tags
             every { scenarioName } returns "test-scenario"
             every { stepName } returns "test-step"
         }
@@ -185,7 +185,7 @@ internal class MongoDbIterativeReaderTest {
             every { failureCounter.report(any()) } returns failureCounter
         }
         val startStopContext = relaxedMockk<StepStartStopContext> {
-            every { toEventTags() } returns tags
+            every { toMetersTags() } returns tags
             every { scenarioName } returns "test-scenario"
             every { stepName } returns "test-step"
         }

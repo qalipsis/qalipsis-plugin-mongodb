@@ -22,5 +22,5 @@ package io.qalipsis.plugins.mongodb
  */
 internal object Constants {
 
-    const val DOCKER_IMAGE = "mongo:4.4.2"
+    const val DOCKER_IMAGE = "mongo:7"
 }

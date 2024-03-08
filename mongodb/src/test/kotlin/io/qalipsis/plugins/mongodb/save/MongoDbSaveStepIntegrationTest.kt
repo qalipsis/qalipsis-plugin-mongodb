@@ -41,9 +41,6 @@ import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
-import java.time.Duration
-import java.util.concurrent.TimeUnit
-import kotlin.math.pow
 import org.bson.Document
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -57,6 +54,9 @@ import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import java.time.Duration
+import java.util.concurrent.TimeUnit
+import kotlin.math.pow
 
 /**
  *
@@ -93,18 +93,46 @@ internal class MongoDbSaveStepIntegrationTest {
     @Test
     @Timeout(10)
     fun `should succeed when sending query with single results`() = testDispatcherProvider.run {
-        val eventTags = emptyMap<String, String>()
+        val metersTags = emptyMap<String, String>()
         val meterRegistry = relaxedMockk<CampaignMeterRegistry> {
-            every { counter("test-scenario", "test-step","mongodb-save-saving-records", refEq(eventTags)) } returns recordsCount
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-save-saving-records",
+                    refEq(metersTags)
+                )
+            } returns recordsCount
             every { recordsCount.report(any()) } returns recordsCount
-            every { timer("test-scenario", "test-step", "mongodb-save-time-to-response", refEq(eventTags)) } returns timeToResponse
-            every { counter("test-scenario", "test-step", "mongodb-save-failures", refEq(eventTags)) } returns failureCounter
-            every { counter("test-scenario", "test-step", "mongodb-save-successes", refEq(eventTags)) } returns successCounter
+            every {
+                timer(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-save-time-to-response",
+                    refEq(metersTags)
+                )
+            } returns timeToResponse
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-save-failures",
+                    refEq(metersTags)
+                )
+            } returns failureCounter
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-save-successes",
+                    refEq(metersTags)
+                )
+            } returns successCounter
             every { successCounter.report(any()) } returns successCounter
             every { failureCounter.report(any()) } returns failureCounter
         }
         val startStopContext = relaxedMockk<StepStartStopContext> {
-            every { toEventTags() } returns eventTags
+            every { toMetersTags() } returns metersTags
             every { scenarioName } returns "test-scenario"
             every { stepName } returns "test-step"
         }
@@ -120,7 +148,7 @@ internal class MongoDbSaveStepIntegrationTest {
 
         saveClient.start(startStopContext)
 
-        val resultOfExecute = saveClient.execute("db1", "col1", listOf(document), eventTags)
+        val resultOfExecute = saveClient.execute("db1", "col1", listOf(document), metersTags)
 
         assertThat(resultOfExecute).isInstanceOf(MongoDbSaveQueryMeters::class.java).all {
             prop("savedRecords").isEqualTo(1)
@@ -138,12 +166,12 @@ internal class MongoDbSaveStepIntegrationTest {
         }
 
         verify {
-            eventsLogger.debug("mongodb.save.saving-records", 1, any(), tags = eventTags)
+            eventsLogger.debug("mongodb.save.saving-records", 1, any(), tags = metersTags)
             timeToResponse.record(more(0L), TimeUnit.NANOSECONDS)
             recordsCount.increment(1.0)
             recordsCount.report(any<Meter.ReportingConfiguration<Counter>.() -> Unit>())
-            eventsLogger.info("mongodb.save.time-to-response", any<Duration>(), any(), tags = eventTags)
-            eventsLogger.info("mongodb.save.saved-records", any<Array<*>>(), any(), tags = eventTags)
+            eventsLogger.info("mongodb.save.time-to-response", any<Duration>(), any(), tags = metersTags)
+            eventsLogger.info("mongodb.save.saved-records", any<Array<*>>(), any(), tags = metersTags)
         }
         confirmVerified(timeToResponse, recordsCount, eventsLogger)
     }
@@ -151,17 +179,38 @@ internal class MongoDbSaveStepIntegrationTest {
     @Test
     @Timeout(10)
     fun `should throw an exception when sending invalid documents`(): Unit = testDispatcherProvider.run {
-        val eventTags = emptyMap<String, String>()
+        val metersTags = emptyMap<String, String>()
         val meterRegistry = relaxedMockk<CampaignMeterRegistry> {
-            every { counter("test-scenario", "test-step","mongodb-save-saving-records", refEq(eventTags)) } returns recordsCount
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-save-saving-records",
+                    refEq(metersTags)
+                )
+            } returns recordsCount
             every { recordsCount.report(any()) } returns recordsCount
-            every { counter("test-scenario", "test-step", "mongodb-save-failures", refEq(eventTags)) } returns failureCounter
-            every { counter("test-scenario", "test-step", "mongodb-save-successes", refEq(eventTags)) } returns successCounter
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-save-failures",
+                    refEq(metersTags)
+                )
+            } returns failureCounter
+            every {
+                counter(
+                    "test-scenario",
+                    "test-step",
+                    "mongodb-save-successes",
+                    refEq(metersTags)
+                )
+            } returns successCounter
             every { successCounter.report(any()) } returns successCounter
             every { failureCounter.report(any()) } returns failureCounter
         }
         val startStopContext = relaxedMockk<StepStartStopContext> {
-            every { toEventTags() } returns eventTags
+            every { toMetersTags() } returns metersTags
             every { scenarioName } returns "test-scenario"
             every { stepName } returns "test-step"
         }

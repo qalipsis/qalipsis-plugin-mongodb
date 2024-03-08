@@ -94,10 +94,10 @@ internal class MongoDbIterativeReader(
     override fun start(context: StepStartStopContext) {
         log.debug { "Starting the step with the context $context" }
         meterRegistry?.apply {
-            val tags = context.toEventTags()
+            val metersTags = context.toMetersTags()
             val scenarioName = context.scenarioName
             val stepName = context.stepName
-            recordsCount = counter(scenarioName, stepName, "$meterPrefix-received-records", tags).report {
+            recordsCount = counter(scenarioName, stepName, "$meterPrefix-received-records", metersTags).report {
                 display(
                     format = "attempted req: %,.0f",
                     severity = ReportMessageSeverity.INFO,
@@ -106,8 +106,8 @@ internal class MongoDbIterativeReader(
                     Counter::count
                 )
             }
-            timeToResponse = timer(scenarioName, stepName,  "$meterPrefix-time-to-response", tags)
-            successCounter = counter(scenarioName, stepName, "$meterPrefix-successes", tags).report {
+            timeToResponse = timer(scenarioName, stepName, "$meterPrefix-time-to-response", metersTags)
+            successCounter = counter(scenarioName, stepName, "$meterPrefix-successes", metersTags).report {
                 display(
                     format = "\u2713 %,.0f req",
                     severity = ReportMessageSeverity.INFO,
@@ -116,7 +116,7 @@ internal class MongoDbIterativeReader(
                     Counter::count
                 )
             }
-            failureCounter = counter(scenarioName, stepName, "$meterPrefix-failures", tags).report {
+            failureCounter = counter(scenarioName, stepName, "$meterPrefix-failures", metersTags).report {
                 display(
                     format = "\u2716 %,.0f failures",
                     severity = ReportMessageSeverity.ERROR,
