@@ -90,7 +90,7 @@ internal class MongoDbIterativeReaderTest {
         val latch = SuspendedCountLatch(1, true)
         val tags: Map<String, String> = emptyMap()
         val mockMeterRegistry = relaxedMockk<CampaignMeterRegistry> {
-            every { counter("test-scenario", "test-step","mongodb-poll-received-records", refEq(tags)) } returns recordsCount
+            every { counter("test-scenario", "test-step", "mongodb-poll-received-records", refEq(tags)) } returns recordsCount
             every { recordsCount.report(any()) } returns recordsCount
             every { counter("test-scenario", "test-step","mongodb-poll-successes", refEq(tags)) } returns successCounter
             every { successCounter.report(any()) } returns successCounter

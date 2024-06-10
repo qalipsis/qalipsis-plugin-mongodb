@@ -16,8 +16,8 @@
 
 package io.qalipsis.plugins.mongodb.search
 
-import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.Timer
+import io.qalipsis.api.meters.Counter
+import io.qalipsis.api.meters.Timer
 import java.util.concurrent.TimeUnit
 
 /**
