@@ -31,7 +31,6 @@ import io.qalipsis.api.steps.DummyStepSpecification
 import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.plugins.mongodb.Sorting
 import io.qalipsis.plugins.mongodb.mongodb
-import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.relaxedMockk
 import org.bson.Document

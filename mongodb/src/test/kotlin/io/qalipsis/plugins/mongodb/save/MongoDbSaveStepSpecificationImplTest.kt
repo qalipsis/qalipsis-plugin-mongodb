@@ -25,9 +25,6 @@ import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.DummyStepSpecification
 import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.plugins.mongodb.mongodb
-import io.qalipsis.plugins.mongodb.save.MongoDbSaveQueryConfiguration
-import io.qalipsis.plugins.mongodb.save.MongoDbSaveStepSpecificationImpl
-import io.qalipsis.plugins.mongodb.save.save
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.relaxedMockk
 import org.bson.Document

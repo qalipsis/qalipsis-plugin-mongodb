@@ -27,16 +27,11 @@ import assertk.assertions.prop
 import com.mongodb.reactivestreams.client.MongoClients
 import io.qalipsis.api.scenario.StepSpecificationRegistry
 import io.qalipsis.api.scenario.TestScenarioFactory
-import io.qalipsis.api.scenario.scenario
 import io.qalipsis.api.steps.SingletonConfiguration
 import io.qalipsis.api.steps.SingletonType
 import io.qalipsis.api.steps.StepMonitoringConfiguration
 import io.qalipsis.plugins.mongodb.Sorting
 import io.qalipsis.plugins.mongodb.mongodb
-import io.qalipsis.plugins.mongodb.poll.DefaultValues
-import io.qalipsis.plugins.mongodb.poll.MongoDbPollStepSpecificationImpl
-import io.qalipsis.plugins.mongodb.poll.MongoDbSearchConfiguration
-import io.qalipsis.plugins.mongodb.poll.poll
 import org.bson.Document
 import org.junit.jupiter.api.Test
 import java.time.Duration

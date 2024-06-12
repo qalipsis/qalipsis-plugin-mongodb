@@ -32,8 +32,6 @@ import io.mockk.spyk
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.StepCreationContext
 import io.qalipsis.api.steps.StepCreationContextImpl
-import io.qalipsis.plugins.mongodb.save.MongoDbSaveStepSpecificationConverter
-import io.qalipsis.plugins.mongodb.save.MongoDbSaveStepSpecificationImpl
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
