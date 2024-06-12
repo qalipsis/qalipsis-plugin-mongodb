@@ -33,10 +33,6 @@ import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.steps.StepCreationContext
 import io.qalipsis.api.steps.StepCreationContextImpl
 import io.qalipsis.plugins.mongodb.Sorting
-import io.qalipsis.plugins.mongodb.search.MongoDbQueryConfiguration
-import io.qalipsis.plugins.mongodb.search.MongoDbSearchStep
-import io.qalipsis.plugins.mongodb.search.MongoDbSearchStepSpecificationConverter
-import io.qalipsis.plugins.mongodb.search.MongoDbSearchStepSpecificationImpl
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk

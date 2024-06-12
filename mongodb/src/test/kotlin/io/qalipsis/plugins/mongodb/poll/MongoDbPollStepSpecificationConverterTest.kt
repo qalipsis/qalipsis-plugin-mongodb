@@ -39,8 +39,6 @@ import io.qalipsis.plugins.mongodb.Sorting
 import io.qalipsis.plugins.mongodb.converters.MongoDbDocumentPollBatchConverter
 import io.qalipsis.plugins.mongodb.converters.MongoDbDocumentPollSingleConverter
 import io.qalipsis.plugins.mongodb.poll.MongoDbIterativeReader
-import io.qalipsis.plugins.mongodb.poll.MongoDbPollStepSpecificationConverter
-import io.qalipsis.plugins.mongodb.poll.MongoDbPollStepSpecificationImpl
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk

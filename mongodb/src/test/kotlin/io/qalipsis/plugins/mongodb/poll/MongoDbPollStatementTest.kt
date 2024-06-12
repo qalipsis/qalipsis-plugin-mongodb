@@ -25,7 +25,6 @@ import com.mongodb.client.model.Filters.and
 import com.mongodb.client.model.Filters.gte
 import io.mockk.spyk
 import io.qalipsis.plugins.mongodb.Sorting
-import io.qalipsis.plugins.mongodb.poll.MongoDbPollStatement
 import io.qalipsis.test.assertk.prop
 import io.qalipsis.test.assertk.typedProp
 import org.bson.BsonString

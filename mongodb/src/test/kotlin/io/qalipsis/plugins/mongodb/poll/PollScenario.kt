@@ -29,7 +29,6 @@ import io.qalipsis.api.steps.map
 import io.qalipsis.api.steps.onEach
 import io.qalipsis.plugins.mongodb.Sorting
 import io.qalipsis.plugins.mongodb.mongodb
-import io.qalipsis.plugins.mongodb.poll.poll
 import org.bson.BsonTimestamp
 import org.bson.Document
 import java.time.Duration
@@ -78,9 +77,9 @@ object PollScenario {
             }.flatten()
             .map { it.value }
             .logErrors()
-            .innerJoin(
-                using = { it.value["username"] },
-                on = {
+            .innerJoin()
+            .using { it.value["username"] }
+            .on {
                     it.mongodb().poll {
                         name = "poll.out"
                         connect { MongoClients.create("mongodb://localhost:${mongoDbPort}/?streamType=netty") }
@@ -99,9 +98,8 @@ object PollScenario {
                             log.trace { "Right record: $it" }
                             it.value
                         }
-                },
-                having = { it.value["username"].also { log.trace { "Right: $it" } } }
-            )
+            }
+            .having { it.value["username"].also { log.trace { "Right: $it" } } }
             .filterNotNull()
             .map { (inAction, outAction) ->
                 val epochSecondIn = (inAction["timestamp"] as BsonTimestamp).value
