@@ -38,7 +38,6 @@ import io.qalipsis.test.coroutines.TestDispatcherProvider
 import io.qalipsis.test.mockk.WithMockk
 import io.qalipsis.test.mockk.relaxedMockk
 import io.qalipsis.test.steps.AbstractStepSpecificationConverterTest
-import kotlinx.coroutines.CoroutineScope
 import org.bson.Document
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -66,9 +65,6 @@ internal class MongoDbSearchStepSpecificationConverterTest :
 
     @RelaxedMockK
     private lateinit var clientFactory: () -> MongoClient
-
-    @RelaxedMockK
-    private lateinit var ioCoroutineScope: CoroutineScope
 
     @Test
     override fun `should not support unexpected spec`() {
@@ -113,7 +109,6 @@ internal class MongoDbSearchStepSpecificationConverterTest :
             assertThat(it).isInstanceOf(MongoDbSearchStep::class).all {
                 prop("name").isNotNull().isEqualTo("mongodb-search-step")
                 prop("mongoDbQueryClient").all {
-                    prop("ioCoroutineScope").isSameAs(ioCoroutineScope)
                     prop("clientFactory").isNotNull().isSameAs(clientFactory)
                     prop("eventsLogger").isNull()
                     prop("meterRegistry").isNotNull().isSameAs(meterRegistry)
@@ -160,7 +155,6 @@ internal class MongoDbSearchStepSpecificationConverterTest :
                 prop("filter").isEqualTo(filter)
                 prop("sorting").isEqualTo(sorting)
                 prop("mongoDbQueryClient").all {
-                    prop("ioCoroutineScope").isSameAs(ioCoroutineScope)
                     prop("clientFactory").isNotNull().isSameAs(clientFactory)
                     prop("meterRegistry").isNull()
                     prop("eventsLogger").isNotNull().isSameAs(eventsLogger)
