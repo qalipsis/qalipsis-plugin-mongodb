@@ -16,7 +16,6 @@
 
 package io.qalipsis.plugins.mongodb.search
 
-import io.qalipsis.api.Executors
 import io.qalipsis.api.annotations.StepConverter
 import io.qalipsis.api.context.StepContext
 import io.qalipsis.api.events.EventsLogger
@@ -26,8 +25,6 @@ import io.qalipsis.api.steps.StepCreationContext
 import io.qalipsis.api.steps.StepSpecification
 import io.qalipsis.api.steps.StepSpecificationConverter
 import io.qalipsis.plugins.mongodb.Sorting
-import jakarta.inject.Named
-import kotlinx.coroutines.CoroutineScope
 import org.bson.Document
 
 /**
@@ -38,7 +35,6 @@ import org.bson.Document
  */
 @StepConverter
 internal class MongoDbSearchStepSpecificationConverter(
-    @Named(Executors.IO_EXECUTOR_NAME) private val ioCoroutineScope: CoroutineScope,
     private val meterRegistry: CampaignMeterRegistry,
     private val eventsLogger: EventsLogger
 ) : StepSpecificationConverter<MongoDbSearchStepSpecificationImpl<*>> {
@@ -56,7 +52,6 @@ internal class MongoDbSearchStepSpecificationConverter(
             id = stepId,
             retryPolicy = spec.retryPolicy,
             mongoDbQueryClient = MongoDbQueryClientImpl(
-                ioCoroutineScope,
                 spec.clientFactory,
                 eventsLogger = supplyIf(spec.monitoringConfig.events) { eventsLogger },
                 meterRegistry = supplyIf(spec.monitoringConfig.meters) { meterRegistry }
