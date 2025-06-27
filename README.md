@@ -29,5 +29,5 @@ You can find examples of QALIPSIS scenarios under https://github.com/qalipsis/qa
 
 ## License
 
-The QALIPSIS plugin for MongoDB is distributed under the Apache License 2.0, the terms can be
+The QALIPSIS plugin for MongoDB is distributed under the GNU Affero General Public License 3.0, the terms can be
 read [here](./LICENSE).
