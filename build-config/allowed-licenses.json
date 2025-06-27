@@ -149,6 +149,10 @@
     },
     {
       "moduleLicense": ".*",
+      "moduleName": "io.qalipsis:qalipsis-api-dev"
+    },
+    {
+      "moduleLicense": ".*",
       "moduleName": "io.zipkin.brave:brave-bom"
     },
     {

@@ -16,22 +16,21 @@
 
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_ERROR
+import org.jetbrains.kotlin.gradle.plugin.extraProperties
+import org.jreleaser.model.Active
+import org.jreleaser.model.Signing
+import org.jreleaser.model.api.deploy.maven.MavenCentralMavenDeployer
 
 plugins {
     idea
     java
-    kotlin("jvm") version "1.8.21"
-    kotlin("kapt") version "1.8.21"
-    kotlin("plugin.allopen") version "1.8.21"
-
-    id("nebula.contacts") version "6.0.0"
-    id("nebula.info") version "11.4.1"
-    id("nebula.maven-publish") version "18.4.0"
-    id("nebula.maven-scm") version "18.4.0"
-    id("nebula.maven-manifest") version "18.4.0"
-    id("nebula.maven-apache-license") version "18.4.0"
-    id("com.github.jk1.dependency-license-report") version "1.17"
-    signing
+    kotlin("jvm") version "1.9.25"
+    kotlin("kapt") version "1.9.25"
+    kotlin("plugin.allopen") version "1.9.25"
+    `maven-publish`
+    id("org.jreleaser") version "1.18.0"
+    id("com.github.jk1.dependency-license-report") version "2.9"
+    id("com.palantir.git-version") version "3.0.0"
 }
 
 licenseReport {
@@ -45,106 +44,106 @@ licenseReport {
     filters = arrayOf<com.github.jk1.license.filter.DependencyFilter>(com.github.jk1.license.filter.LicenseBundleNormalizer())
 }
 
-/**
- * Target version of the generated JVM bytecode.
- */
-val target = JavaVersion.VERSION_11
-
-configure<JavaPluginConvention> {
-    description = "QALIPSIS plugin for MongoDB"
-
-    sourceCompatibility = target
-    targetCompatibility = target
-}
+description = "QALIPSIS plugin for MongoDB"
 
 tasks.withType<Wrapper> {
     distributionType = Wrapper.DistributionType.BIN
-    gradleVersion = "6.8.1"
+    gradleVersion = "8.14.1"
 }
 
 val testNumCpuCore: String? by project
+
+jreleaser {
+    gitRootSearch.set(true)
+
+    release {
+        // One least one enabled release provider is mandatory, so let's use Github and disable
+        // all the options.
+        github {
+            skipRelease.set(true)
+            skipTag.set(true)
+            uploadAssets.set(Active.NEVER)
+            token.set("dummy")
+        }
+    }
+
+    val enableSign = !extraProperties.has("qalipsis.sign") || extraProperties.get("qalipsis.sign") != "false"
+    if (enableSign) {
+        signing {
+            active.set(Active.ALWAYS)
+            mode.set(Signing.Mode.MEMORY)
+            armored = true
+        }
+    }
+
+    deploy {
+        maven {
+            mavenCentral {
+                register("qalipsis-releases") {
+                    active.set(Active.RELEASE_PRERELEASE)
+                    namespace.set("io.qalipsis")
+                    applyMavenCentralRules.set(true)
+                    stage.set(MavenCentralMavenDeployer.Stage.UPLOAD)
+                    stagingRepository(layout.buildDirectory.dir("staging-deploy").get().asFile.path)
+                }
+            }
+            nexus2 {
+                register("qalipsis-snapshots") {
+                    active.set(Active.SNAPSHOT)
+                    // Here we are using our own repository, because the maven central snapshot repo
+                    // is too often not available.
+                    url.set("https://maven.qalipsis.com/repository/oss-snapshots/")
+                    snapshotUrl.set("https://maven.qalipsis.com/repository/oss-snapshots/")
+                    applyMavenCentralRules.set(true)
+                    verifyPom.set(false)
+                    snapshotSupported.set(true)
+                    closeRepository.set(true)
+                    releaseRepository.set(true)
+                    stagingRepository(layout.buildDirectory.dir("staging-deploy").get().asFile.path)
+                }
+            }
+        }
+    }
+}
+
 
 allprojects {
     group = "io.qalipsis.plugin"
     version = File(rootDir, "project.version").readText().trim()
 
-    apply(plugin = "java")
-    apply(plugin = "nebula.contacts")
-    apply(plugin = "nebula.info")
-    apply(plugin = "nebula.maven-publish")
-    apply(plugin = "nebula.maven-scm")
-    apply(plugin = "nebula.maven-manifest")
-    apply(plugin = "nebula.maven-developer")
-    apply(plugin = "nebula.maven-apache-license")
-    apply(plugin = "nebula.javadoc-jar")
-    apply(plugin = "nebula.source-jar")
-    apply(plugin = "signing")
-
-    infoBroker {
-        excludedManifestProperties = listOf(
-            "Manifest-Version", "Module-Owner", "Module-Email", "Module-Source",
-            "Built-OS", "Build-Host", "Build-Job", "Build-Host", "Build-Job", "Build-Number", "Build-Id", "Build-Url",
-            "Built-Status"
-        )
-    }
-
-    contacts {
-        addPerson("eric.jesse@aeris-consulting.com", delegateClosureOf<nebula.plugin.contacts.Contact> {
-            moniker = "Eric Jessé"
-            github = "ericjesse"
-            role("Owner")
-        })
-    }
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "maven-publish")
+    apply(plugin = "com.palantir.git-version")
 
     repositories {
         mavenLocal()
-        mavenCentral()
-        maven {
-            name = "maven-central-snapshots"
-            setUrl("https://oss.sonatype.org/content/repositories/snapshots")
-        }
-    }
-
-    configure<JavaPluginConvention> {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    val signingKeyId = "signing.keyId"
-    if (System.getProperty(signingKeyId) != null || System.getenv(signingKeyId) != null) {
-        signing {
-            publishing.publications.forEach { sign(it) }
-        }
-    }
-
-    val ossrhUsername: String? by project
-    val ossrhPassword: String? by project
-    publishing {
-        publications {
-            filterIsInstance<MavenPublication>().forEach {
-                it.artifactId = project.name
-            }
-        }
-        repositories {
-            mavenLocal()
+        if (version.toString().endsWith("-SNAPSHOT")) {
             maven {
-                val releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-                val snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-                name = "sonatype"
-                url = uri(if (project.version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
-                credentials {
-                    username = ossrhUsername
-                    password = ossrhPassword
+                name = "QALIPSIS OSS Snapshots"
+                url = uri("https://maven.qalipsis.com/repository/oss-snapshots")
+                content {
+                    includeGroup("io.qalipsis")
                 }
             }
         }
+        mavenCentral()
+    }
+
+    kotlin {
+        javaToolchains {
+            jvmToolchain(11)
+        }
+    }
+
+    java {
+        withJavadocJar()
+        withSourcesJar()
     }
 
     tasks {
 
         withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
             kotlinOptions {
-                jvmTarget = target.majorVersion
                 javaParameters = true
                 freeCompilerArgs += listOf(
                     "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
@@ -215,9 +214,51 @@ allprojects {
             }
         }
     }
+
+    project.afterEvaluate {
+        publishing {
+            publications {
+                create<MavenPublication>("maven") {
+                    from(components["java"])
+                    pom {
+
+                        name.set(project.name)
+                        description.set(project.description)
+
+                        if (version.toString().endsWith("-SNAPSHOT")) {
+                            this.withXml {
+                                this.asNode().appendNode("distributionManagement").appendNode("repository").apply {
+                                    this.appendNode("id", "qalipsis-oss-snapshots")
+                                    this.appendNode("name", "QALIPSIS OSS Snapshots")
+                                    this.appendNode("url", "https://maven.qalipsis.com/repository/oss-snapshots")
+                                }
+                            }
+                        }
+                        url.set("https://qalipsis.io")
+                        licenses {
+                            license {
+                                name.set("GNU AFFERO GENERAL PUBLIC LICENSE, Version 3 (AGPL-3.0)")
+                                url.set("http://opensource.org/licenses/AGPL-3.0")
+                            }
+                        }
+                        developers {
+                            developer {
+                                id.set("ericjesse")
+                                name.set("Eric Jessé")
+                            }
+                        }
+                        scm {
+                            connection.set("scm:git:https://github.com/qalipsis/qalipsis-plugin-mongodb.git")
+                            url.set("https://github.com/qalipsis/qalipsis-plugin-mongodb.git/")
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
-val testTasks = subprojects.flatMap {
+val allTestTasks = subprojects.flatMap {
     val testTasks = mutableListOf<Test>()
     (it.tasks.findByName("test") as Test?)?.apply {
         testTasks.add(this)
@@ -228,8 +269,11 @@ val testTasks = subprojects.flatMap {
     testTasks
 }
 
-tasks.register("testReport", TestReport::class) {
-    this.group = "verification"
-    destinationDir = file("${buildDir}/reports/tests")
-    reportOn(*(testTasks.toTypedArray()))
+tasks.register("aggregatedTestReport", TestReport::class) {
+    group = "documentation"
+    description = "Create an aggregated test report"
+
+    destinationDirectory.set(project.layout.buildDirectory.dir("reports/tests"))
+    testResults.from(*(allTestTasks.toTypedArray()))
+    dependsOn.clear()
 }

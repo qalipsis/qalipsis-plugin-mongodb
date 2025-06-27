@@ -16,10 +16,10 @@
 
 package io.qalipsis.plugins.mongodb.poll
 
+import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
-import assertk.assertions.isFailure
 import assertk.assertions.isNull
 import com.mongodb.client.model.Filters.and
 import com.mongodb.client.model.Filters.gte
@@ -36,7 +36,7 @@ internal class MongoDbPollStatementTest {
 
     @Test
     fun `should fail when there is no sort clause`() {
-        assertThat {
+        assertFailure {
             MongoDbPollStatement(
                 databaseName = "any",
                 collectionName = "any",
@@ -45,14 +45,12 @@ internal class MongoDbPollStatementTest {
                 sortClauseValues = linkedMapOf(),
                 tieBreakerName = "any"
             )
-            // when initialisation happens
-            // then
-        }.isFailure().hasMessage("The provided query has no sort clause")
+        }.hasMessage("The provided query has no sort clause")
     }
 
     @Test
     fun `should fail when there tie-breaker is not the first column in sort clause values`() {
-        assertThat {
+        assertFailure {
             MongoDbPollStatement(
                 databaseName = "any",
                 collectionName = "any",
@@ -62,9 +60,7 @@ internal class MongoDbPollStatementTest {
                 // given
                 tieBreakerName = "two"
             )
-            // when initialisation happens
-            // then
-        }.isFailure().hasMessage("The tie-breaker should be set as the first sorting column")
+        }.hasMessage("The tie-breaker should be set as the first sorting column")
     }
 
     @Test
